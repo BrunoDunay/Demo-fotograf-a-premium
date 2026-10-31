@@ -402,8 +402,11 @@ export class PhotoPile {
       this.openZoom(b);
       return;
     }
+    // Si la foto se sostuvo quieta antes de soltarla, no lleva impulso.
+    const lastMove = press.samples[press.samples.length - 1]?.t ?? 0;
+    if (performance.now() - lastMove > 90) b.vx = b.vy = 0;
     const speed = Math.hypot(b.vx, b.vy);
-    const fling = e.pointerType === 'mouse' ? 1.15 : 0.85;
+    const fling = e.pointerType === 'mouse' ? 1.15 : 0.7;
     if (speed > fling) {
       // Lanzada: sigue de largo con giro y sale de la mesa.
       b.mode = 'fly';
