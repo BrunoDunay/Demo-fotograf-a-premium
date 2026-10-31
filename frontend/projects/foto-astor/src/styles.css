@@ -1,0 +1,478 @@
+/* Astor · Fotografía de bodas y eventos sociales (demo Premium).
+   Papel de algodón, tinta, plata y una sola nota cálida (champán). La galería y el rollo viven en la noche. */
+@import '@fontsource-variable/bodoni-moda/opsz.css';
+@import '@fontsource-variable/bodoni-moda/opsz-italic.css';
+@import '@fontsource-variable/oswald/wght.css';
+@import '@fontsource-variable/hanken-grotesk/wght.css';
+@import '@fontsource/mrs-saint-delafield/latin-400.css';
+
+:root {
+  /* Color */
+  --color-paper: #efece6;
+  --color-paper-2: #e5e1d9;
+  --color-paper-3: #d9d4ca;
+  --color-card: #f8f6f1;
+  --color-ink: #171614;
+  --color-ink-2: #3b3935;
+  --color-muted: #77726a;
+  --color-line: rgb(23 22 20 / 13%);
+  --color-line-2: rgb(23 22 20 / 24%);
+  --color-night: #0a0a0b;
+  --color-night-2: #141415;
+  --color-night-3: #1d1d1f;
+  --color-on-night: #ece8e1;
+  --color-on-night-2: rgb(236 232 225 / 62%);
+  --color-line-night: rgb(236 232 225 / 14%);
+  --color-champagne: #a98b66;
+  --color-champagne-soft: #cdb592;
+  --color-silver-1: #8d8b86;
+  --color-silver-2: #e9e7e2;
+  --color-whatsapp: #1f7a4d;
+  --color-danger: #9b3b2f;
+  --color-tape: rgb(214 201 178 / 78%);
+
+  /* Tipografía */
+  --font-display: 'Bodoni Moda Variable', 'Bodoni 72', Didot, Georgia, serif;
+  --font-script: 'Mrs Saint Delafield', 'Snell Roundhand', cursive;
+  --font-label: 'Oswald Variable', 'Arial Narrow', sans-serif;
+  --font-body: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-xs: 0.72rem;
+  --text-sm: 0.86rem;
+  --text-base: clamp(1rem, 0.96rem + 0.2vw, 1.08rem);
+  --text-lg: clamp(1.15rem, 1.05rem + 0.4vw, 1.35rem);
+  --text-xl: clamp(1.5rem, 1.2rem + 1.2vw, 2.2rem);
+  --text-2xl: clamp(2.2rem, 1.6rem + 2.6vw, 3.8rem);
+  --text-3xl: clamp(2.8rem, 1.8rem + 4.6vw, 6.4rem);
+  --text-4xl: clamp(3.4rem, 2rem + 7vw, 9.5rem);
+
+  /* Espacio */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-section: clamp(88px, 7vw + 40px, 168px);
+  --gutter: clamp(16px, 4vw, 56px);
+  --max: 1320px;
+
+  /* Forma */
+  --radius-1: 3px;
+  --radius-2: 8px;
+  --radius-3: 16px;
+  --radius-pill: 999px;
+  --shadow-paper: 0 1px 1px rgb(30 24 16 / 8%), 0 6px 14px -6px rgb(30 24 16 / 22%), 0 22px 40px -24px rgb(30 24 16 / 30%);
+  --shadow-lift: 0 2px 3px rgb(30 24 16 / 10%), 0 18px 30px -10px rgb(30 24 16 / 32%), 0 50px 80px -40px rgb(30 24 16 / 45%);
+  --shadow-night: 0 30px 80px -30px rgb(0 0 0 / 80%);
+
+  /* Movimiento */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Capas */
+  --z-pile: 2;
+  --z-header: 40;
+  --z-menu: 50;
+  --z-viewer: 70;
+  --z-banner: 80;
+  --z-intro: 100;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--color-paper);
+  /* Nada se desplaza de lado en ningún ancho (decorados y tarjetas giradas pueden asomarse). */
+  overflow-x: clip;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Grano de papel muy suave sobre todo el sitio claro. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+img,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+select,
+textarea {
+  font-size: max(16px, 1em);
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 96;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+em {
+  font-style: italic;
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-champagne);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+html.grabbing,
+html.grabbing * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  cursor: grabbing !important;
+}
+
+/* ===== Utilidades ===== */
+.container {
+  width: 100%;
+  max-width: calc(var(--max) + var(--gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  position: relative;
+  padding-block: var(--space-section);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.label {
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+.script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.lead {
+  font-size: var(--text-lg);
+  line-height: 1.55;
+  color: var(--color-ink-2);
+  max-width: 34em;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-muted);
+}
+
+.kicker::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+}
+
+.on-night {
+  background: var(--color-night);
+  color: var(--color-on-night);
+}
+
+.on-night .lead,
+.on-night .kicker {
+  color: var(--color-on-night-2);
+}
+
+/* ===== Botones ===== */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 26px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-label);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    scale 160ms var(--ease-out),
+    background-color 300ms ease,
+    color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.btn:active {
+  scale: 0.96;
+}
+
+.btn-ink {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* Destello: una franja de luz cruza el botón al pasar el cursor. */
+.btn-ink::after,
+.btn-light::after {
+  content: '';
+  position: absolute;
+  inset: -2px auto -2px 0;
+  width: 46%;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 22%), transparent);
+  transform: translateX(-120%) skewX(-16deg);
+}
+
+.btn-line {
+  box-shadow: inset 0 0 0 1px var(--color-line-2);
+  color: var(--color-ink);
+}
+
+.btn-light {
+  background: var(--color-on-night);
+  color: var(--color-night);
+}
+
+.btn-line-light {
+  box-shadow: inset 0 0 0 1px rgb(236 232 225 / 32%);
+  color: var(--color-on-night);
+}
+
+.btn .star {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  transition: rotate 600ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-ink:hover::after,
+  .btn-light:hover::after {
+    transform: translateX(320%) skewX(-16deg);
+    transition: transform 900ms var(--ease-out);
+  }
+  .btn-line:hover {
+    box-shadow: inset 0 0 0 1px var(--color-ink);
+  }
+  .btn-line-light:hover {
+    box-shadow: inset 0 0 0 1px var(--color-on-night);
+  }
+  .btn:hover .star {
+    rotate: 90deg;
+  }
+}
+
+/* Enlace con subrayado que se dibuja. */
+.link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 6px;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat;
+  transition: background-size 500ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    background-size: 0 1px;
+    background-position: 100% 100%;
+  }
+}
+
+/* ===== Papel, clips y cinta (sobre mí, calendario, reseñas) ===== */
+.paper {
+  position: relative;
+  background: var(--color-card);
+  box-shadow: var(--shadow-paper);
+}
+
+.paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.43 0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+}
+
+.tape {
+  position: absolute;
+  height: 30px;
+  background: var(--color-tape);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  mask: linear-gradient(90deg, transparent, #000 4px calc(100% - 4px), transparent);
+}
+
+/* ===== Revelado al hacer scroll ([data-reveal]) ===== */
+.js [data-reveal] {
+  opacity: 0;
+  translate: 0 28px;
+  transition:
+    opacity 1000ms var(--ease-out) var(--d, 0ms),
+    translate 1200ms var(--ease-out) var(--d, 0ms);
+}
+
+.js [data-reveal='fade'] {
+  translate: 0 0;
+}
+
+.js [data-reveal='scale'] {
+  translate: 0 0;
+  scale: 0.94;
+  transition:
+    opacity 1000ms var(--ease-out) var(--d, 0ms),
+    scale 1400ms var(--ease-out) var(--d, 0ms);
+}
+
+.js [data-reveal].is-in {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+
+/* Interruptor "Reducir movimiento": quita transiciones largas y animaciones decorativas. */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduce-motion [data-reveal] {
+  opacity: 1 !important;
+  translate: none !important;
+  scale: none !important;
+}

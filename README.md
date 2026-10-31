@@ -1,0 +1,32 @@
+# Astor · Demo Premium de fotografía
+
+Sitio demo con marca ficticia para el portafolio de Bruno Dunay: Emilio Astor, fotógrafo de bodas, XV años y eventos sociales en Aguascalientes (paquete **Premium**).
+
+La marca, las personas, las reseñas, los datos de contacto y los precios son inventados. Las fotos y los videos son de Pexels (licencia libre).
+
+Lo más destacado:
+
+- **Mesa de fotos** en la portada: arrastrar, lanzar, ver de cerca en 3D y soltar más fotos al azar.
+- **Galería en 3D** (Three.js) que se recorre con el scroll: cinco salas con pantallas LED, transiciones como las de una galería real, siluetas mirando y piso que refleja.
+- **Rollo de película** con videos, en blanco y negro o a color.
+- **Cámara colgante** que se balancea al tocarla, **tarjeta de presentación** que se gira libremente, calendario de fechas, reseñas tipo Instagram y formulario que abre WhatsApp.
+
+La ficha de diseño completa (concepto, paleta, tipografías, secciones e interacciones) está en `docs/astor.md`.
+
+## Código
+
+Workspace de Angular 22 en `frontend/` con la app `projects/foto-astor`. Salida estática prerenderizada, componentes standalone con signals y sin zone.js, GSAP + Lenis para el movimiento y Three.js solo en la galería (se carga al entrar).
+
+```bash
+cd frontend
+npm install
+npm start          # servidor local en http://localhost:4310
+npm run build      # compila en dist/foto-astor/browser
+npm run media      # vuelve a generar fotos, videos y recortes (opcional)
+```
+
+En Windows/OneDrive, si el servidor se reinicia solo, detenerlo y volver a correr `npm start`.
+
+## Despliegue
+
+Pensado para Vercel conectado a este repositorio: directorio raíz `frontend/`, instalación `npm ci`, compilación `npx ng build foto-astor`, salida `dist/foto-astor/browser`, Node 24. Las cabeceras de seguridad y el respaldo a `index.csr.html` están en `frontend/vercel.json`.

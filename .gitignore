@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.angular/
+.DS_Store
+Thumbs.db
+desktop.ini
+.vercel/
+
+# Material de referencia de Bruno (imágenes de terceros): solo local
+referencias/

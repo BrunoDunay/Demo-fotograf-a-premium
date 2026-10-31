@@ -1,0 +1,115 @@
+<section class="hero" aria-labelledby="hero-title">
+  <div class="table" (pointermove)="onMove($event)" (pointerup)="onUp($event)" (pointercancel)="onUp($event)">
+    <div class="copy">
+      <p class="label kicker">Emilio Astor · Bodas y eventos sociales · Aguascalientes</p>
+      <h1 id="hero-title" class="title">
+        Noches que brillan
+        <span class="script accent">una sola vez</span>
+      </h1>
+      <p class="lead intro-text">
+        Fotografío bodas, XV años y celebraciones como si fuera un invitado más. Esta es mi mesa: revuelve las
+        fotos, avienta las que no quieras y busca la tuya.
+      </p>
+      <div class="ctas">
+        <a routerLink="/galeria" class="btn btn-ink">
+          <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
+          Recorrer la galería
+        </a>
+        <a routerLink="/contacto" fragment="fechas" class="btn btn-line">Ver fechas libres</a>
+      </div>
+    </div>
+
+    <app-celestial class="deco twinkle" kind="stars" />
+
+    @for (c of cards(); track c.id) {
+      <figure
+        class="card"
+        [attr.data-id]="c.id"
+        [style.--px]="c.px + '%'"
+        [style.--py]="c.py + '%'"
+        [style.--pr]="c.pr + 'deg'"
+        [style.--tone]="c.photo.tone"
+        tabindex="0"
+        role="button"
+        [attr.aria-label]="'Ver de cerca: ' + c.photo.alt"
+        (pointerdown)="onDown($event, c)"
+        (keydown)="onKey($event, c)"
+      >
+        <div class="face">
+          <div class="print">
+            <img [src]="photoSrc(c.photo, true)" [alt]="c.photo.alt" draggable="false" loading="eager" decoding="async" />
+          </div>
+          <figcaption>
+            <span class="who">{{ c.who }}</span>
+            <span class="where">{{ c.where }}</span>
+          </figcaption>
+        </div>
+      </figure>
+    }
+
+    @if (empty() && !dropping()) {
+      <div
+        class="refill"
+        [class.compact]="count() > 0"
+        [style.left.px]="count() > 0 ? null : refillAt()?.x"
+        [style.top.px]="count() > 0 ? null : refillAt()?.y"
+      >
+        @if (count() === 0) {
+          <p class="script">Se acabó la mesa.</p>
+          <p class="refill-text">Hay {{ total }} fotos en el archivo y caen al azar. A lo mejor sale la tuya.</p>
+        } @else {
+          <p class="refill-text">Quedan {{ count() }}.<span class="rest"> Caen al azar: a lo mejor sale la tuya.</span></p>
+        }
+        <button type="button" class="btn btn-ink" (click)="dropMore()">
+          <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
+          Soltar más fotos
+        </button>
+      </div>
+    }
+
+    <p class="hint label" [class.gone]="touched()">
+      <app-icon name="drag" [size]="16" />
+      Arrastra · Lanza · Toca para verla de cerca
+    </p>
+    <p class="counter label" aria-live="polite">{{ count() }} en la mesa · {{ total }} en el archivo</p>
+  </div>
+</section>
+
+@if (zoomed(); as z) {
+  <div class="zoom" role="dialog" aria-modal="true" [attr.aria-label]="z.photo.alt">
+    <div class="zoom-shade" (click)="closeZoom()"></div>
+    <div class="zoom-stage">
+      <figure
+        class="zoom-card"
+        (click)="closeZoom()"
+        (pointermove)="zoomTilt($event)"
+        (pointerleave)="zoomRelease($event)"
+        (pointerdown)="zoomDown($event)"
+        (pointerup)="zoomUp($event)"
+        [style.--tone]="z.photo.tone"
+      >
+        <div class="face">
+          <div class="print">
+            <img class="lo" [src]="photoSrc(z.photo, true)" alt="" draggable="false" />
+            <img class="hi" [class.ready]="zoomLoaded()" [src]="photoSrc(z.photo)" [alt]="z.photo.alt" draggable="false" (load)="zoomLoaded.set(true)" />
+            <span class="gloss" aria-hidden="true"></span>
+          </div>
+          <figcaption>
+            <span class="who">{{ z.who }}</span>
+            <span class="where">{{ z.where }}</span>
+          </figcaption>
+        </div>
+      </figure>
+      <div class="zoom-info">
+        <p class="alt">{{ z.photo.alt }}.</p>
+        <div class="zoom-actions">
+          <button type="button" class="btn btn-line" (click)="closeZoom()">Regresar a la mesa</button>
+          <a routerLink="/galeria" class="btn btn-ink" (click)="closeZoom()">Ver la galería</a>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="zoom-close" aria-label="Regresar la foto a la mesa" (click)="closeZoom()">
+      <app-icon name="close" [size]="22" />
+    </button>
+  </div>
+}

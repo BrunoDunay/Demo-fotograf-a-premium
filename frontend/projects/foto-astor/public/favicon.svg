@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    .s { fill: #171614; }
+    .o { fill: none; stroke: #171614; stroke-width: 2.2; }
+    @media (prefers-color-scheme: dark) { .s { fill: #ece8e1; } .o { stroke: #ece8e1; } }
+  </style>
+  <ellipse class="o" cx="32" cy="34" rx="29" ry="10" transform="rotate(-16 32 34)" />
+  <path class="s" d="M32 4c1.9 15.6 8.7 24.3 26 28-17.3 3.7-24.1 12.4-26 28-1.9-15.6-8.7-24.3-26-28 17.3-3.7 24.1-12.4 26-28Z" />
+</svg>
