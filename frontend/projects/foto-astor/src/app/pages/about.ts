@@ -96,7 +96,6 @@ const ROWS = 5;
             </p>
             <figure class="print-card" appStick style="--rot: -6deg">
               <span class="corners" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-              <span class="peel label" aria-hidden="true">Sácala y muévela</span>
               <span class="ph"><img [src]="src('emilio-camara')" alt="Emilio tomando una foto con luz de ventana" loading="lazy" draggable="false" /></span>
               <figcaption><span class="label">El estudio · 2024</span><svg class="stamp" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg></figcaption>
             </figure>
@@ -225,8 +224,6 @@ const ROWS = 5;
     .body + .body { margin-top: 14px; }
     /* La copia queda en una esquina libre (abajo, fuera del texto), sujeta con esquineros de álbum; se puede sacar y mover. */
     .sheet.has-photo { padding-bottom: clamp(150px, 16vw, 210px); }
-    .peel { position: absolute; left: 50%; top: -40px; translate: -50% 0; white-space: nowrap; font-size: 0.56rem; color: var(--color-muted); opacity: 0; transition: opacity 300ms ease; pointer-events: none; }
-    .print-card:hover .peel { opacity: 1; }
     .print-card { position: absolute; right: -26px; bottom: -90px; width: 40%; padding: 9px 9px 0; rotate: var(--rot); }
     .print-card figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 34px; color: rgb(36 33 28 / 60%); font-size: 0.56rem; }
     .print-card .stamp { width: 17px; height: 17px; }

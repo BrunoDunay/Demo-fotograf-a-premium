@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { DatesTeaser } from '../sections/dates-teaser';
-import { EditSuite } from '../sections/edit-suite';
+import { FilmReel } from '../sections/film-reel';
 import { GalleryInvite } from '../sections/gallery-invite';
 import { PhotoPile } from '../sections/photo-pile';
 import { Reviews } from '../sections/reviews';
@@ -10,13 +10,13 @@ import { Venues } from '../sections/venues';
 @Component({
   selector: 'app-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PhotoPile, Venues, Services, GalleryInvite, EditSuite, Reviews, DatesTeaser],
+  imports: [PhotoPile, Venues, Services, GalleryInvite, FilmReel, Reviews, DatesTeaser],
   template: `
     <app-photo-pile />
     <app-venues />
     <app-services />
     <app-gallery-invite />
-    <app-edit-suite />
+    <app-film-reel />
     <app-reviews />
     <app-dates-teaser />
   `,

@@ -11,7 +11,7 @@ La idea del sitio: **las fotos se tocan**. En la portada se revuelven como en un
 ## Identidad
 
 - **Logo:** ASTOR con una estrella de cuatro puntas sobre la A y una órbita con su luna (de la referencia "Elementos gráficos"). La órbita tiene profundidad: la mitad de atrás pasa detrás de la palabra; al aparecer se dibuja y las letras suben, al pasar el cursor la luna da la vuelta y la estrella destella (`shared/logo.ts`). Estrellas, órbitas y lunas en línea fina decoran todo el sitio (`shared/celestial.ts`).
-- **Paleta** (fría, para no parecerse a Armando Ovalle Wedding Studio, que es marfil/espresso/moca): porcelana `#e9ebef`, azul medianoche `#141b2d`, noche `#070b16` (galería, sala de edición, pie, legales) y un solo acento, palo de rosa `#a4514f` / `#e2a7a0`. Todo en variables en `styles.css`.
+- **Paleta** (fría, para no parecerse a Armando Ovalle Wedding Studio, que es marfil/espresso/moca): porcelana `#e9ebef`, azul medianoche `#141b2d`, noche `#070b16` (galería, rollo, pie, legales) y un solo acento, palo de rosa `#a4514f` / `#e2a7a0`. Todo en variables en `styles.css`.
 - **Tipografías:** Instrument Serif (títulos y su itálica para los acentos), Instrument Sans (etiquetas en versales), Hanken Grotesk (texto) y Mrs Saint Delafield solo para lo escrito a mano (pies de foto, firma).
 - **Botones:** el texto rueda al pasar el cursor (`.btn-t` en cada plantilla), el relleno nace donde entra el cursor y se retira por donde sale (en `core/motion.ts`). Los botones no siguen al cursor. `.btn-accent` es la acción principal (Aparta tu fecha) con un brillo que pasa cada tanto.
 - **Menú:** pastilla que se desliza con resorte al enlace bajo el cursor, letras que ruedan una por una y una estrella en el enlace activo.
@@ -33,7 +33,7 @@ Cielo de estrellas que se acerca; nace la estrella con un destello de lente; un 
 2. **Lugares y planners** con los que trabaja (referencia "Marcas"): franja que nunca se detiene; siete tienen logotipo propio (arcos, uvas, lunas, flor, sello circular, monograma, vela) y los demás van solo con su tipografía.
 3. **Lo que fotografía:** Bodas, XV años y Eventos sociales; al pasar por cada renglón sus fotos se abren en abanico.
 4. **Invitación a la galería:** sala en miniatura en CSS 3D con pantallas que cambian con barrido.
-5. **Sala de edición** (`sections/edit-suite.ts`; reemplaza al rollo de película para no parecerse a Duque): ventana de un editor de video con el proyecto "Resumen · Ana & Luis". Monitor 16:9 que reproduce cada clip **completo** (sin recortar, con fondo difuminado) y pasa al siguiente con fundido; inspector con datos del clip; transporte con código de tiempo y botones. Abajo, la **línea de tiempo**: pistas V2 (títulos), V1 (los 17 clips con miniaturas y disolvencias) y A1 (forma de onda), y un cabezal que avanza; la línea se desplaza sola. Pasar el cursor recorre los clips; tocar uno (o el monitor) lo abre en el visor. Se pausa fuera de pantalla; sin reproducción automática con movimiento reducido.
+5. **Rollo de la temporada** (referencia del video del carrete): columnas de película inclinadas con **videos** en cada cuadro, un solo canvas, despacio (26–44 px/s). Interruptor **Blanco y negro / Color**: el blanco y negro lo aplica la tarjeta gráfica a todo el canvas (no cuadro por cuadro) y el cuadro iluminado va en una segunda capa a color. Se decodifican 10 videos (6 en celular).
 6. **Reseñas estilo Instagram** (referencia "Dejar reseñas"): caja para escribir (sello redondo, cinta, estrellas) y comentarios con "me gusta" y respuestas verificadas de @astor.foto. Sin backend: lo que publicas aparece arriba "En revisión" solo en tu navegador.
 7. **¿Ya tienen fecha?:** eliges qué celebras, escribes los nombres y tocas tu día en un calendario (sin fechas ocupadas); al lado se arma una tarjeta "Save the date" con la cuenta regresiva. "Apartar esta fecha" lleva fecha y tipo de evento al formulario.
 
@@ -79,7 +79,7 @@ Boletos con foto, cobertura, nombre, precio grande tras una línea punteada y "Q
 ## Fotos y videos
 
 - **99 fotos de eventos + 4 de "Emilio"** de Pexels (licencia libre), elegidas por impacto y variedad (bodas charras y en hacienda, iglesia, bengalas, pista, XV de colores, bautizos, comuniones, graduaciones). `scripts/media.mjs` las baja, saca WebP normal (1600 px) y `-sm` (720 px) y su color promedio. Lista y textos en ese script; genera `src/app/core/media.data.ts`.
-- **17 videos** de Pexels: póster de 400 × 300 para las miniaturas de la línea de tiempo y MP4 de 960 px (vertical u horizontal) para el monitor y el visor. Más la toma aérea `aereo-jardin` (Pexels 29779627) para la pantalla del dron, generada con `scripts/aerial.mjs`.
+- **17 videos** de Pexels: MP4 de 400 × 300 para el rollo (≈3 MB en total) y de 960 px para el visor, con póster. Más la toma aérea `aereo-jardin` (Pexels 29779627) para la pantalla del dron, generada con `scripts/aerial.mjs`. Más la toma aérea `aereo-jardin` (Pexels 29779627) para la pantalla del dron, generada con `scripts/aerial.mjs`.
 - **Recortes** (`scripts/recortes/`): cámara Fujifilm X100V colgando, lente, dron y 12 personas para las siluetas, sin fondo con `@imgly/background-removal-node`.
 - `scripts/brand-assets.mjs`: favicon.ico, apple-touch-icon y la imagen para compartir `og.jpg`.
 
