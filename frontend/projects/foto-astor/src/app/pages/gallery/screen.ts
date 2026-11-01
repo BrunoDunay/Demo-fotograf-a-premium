@@ -12,6 +12,8 @@ void main() {
 
 // Transición entre la diapositiva actual (tA) y la siguiente (tB). Todo en coordenadas del canvas completo
 // (uvOff/uvScale), para que en pantallas partidas (la caja, el tríptico) el efecto cruce de una a otra.
+// Transiciones suaves y sin pixeles: barrido difuso, deslizamiento con paralaje, vidrio estriado, iris suave,
+// acercamiento con desenfoque, apertura al centro, cortina y fundido por luminosidad.
 const FRAG = /* glsl */ `
 uniform sampler2D tA;
 uniform sampler2D tB;
@@ -23,94 +25,96 @@ uniform vec2 uvOff;
 uniform vec2 uvScale;
 uniform float flipX;
 uniform float aspect;
-uniform vec2 res;
 uniform float kbA;
 uniform float kbB;
 uniform float seed;
 varying vec2 vUv;
 
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 vec2 kb(vec2 uv, float k) { return (uv - 0.5) / (1.0 + k) + 0.5; }
 vec3 A(vec2 uv) { return texture2D(tA, kb(clamp(uv, 0.0, 1.0), kbA)).rgb; }
 vec3 B(vec2 uv) { return texture2D(tB, kb(clamp(uv, 0.0, 1.0), kbB)).rgb; }
+// Desenfoque barato (8 muestras en círculo) para las transiciones que lo necesitan.
+vec3 Ab(vec2 uv, float r) {
+  vec3 c = A(uv) * 0.2;
+  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; c += A(uv + vec2(cos(a), sin(a) * aspect) * r) * 0.1; }
+  return c;
+}
+vec3 Bb(vec2 uv, float r) {
+  vec3 c = B(uv) * 0.2;
+  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; c += B(uv + vec2(cos(a), sin(a) * aspect) * r) * 0.1; }
+  return c;
+}
+float luma(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 
 void main() {
   vec2 local = vec2(mix(vUv.x, 1.0 - vUv.x, flipX), vUv.y);
   vec2 uv = uvOff + local * uvScale;
   float p = clamp(progress, 0.0, 1.0);
+  float e = p * p * (3.0 - 2.0 * p);
   float arc = sin(p * 3.14159265);
   vec3 col;
-  float line = 0.0;
   if (p <= 0.0) {
     col = A(uv);
   } else if (p >= 1.0) {
     col = B(uv);
   } else if (mode == 0) {
-    // Barrido con una línea de luz al frente.
-    float e = p * 1.08 - 0.04;
-    float m = smoothstep(e + 0.004, e - 0.004, uv.x);
+    // Barrido diagonal con borde muy difuso y un brillo suave en el frente.
+    float d = uv.x * 0.85 + (1.0 - uv.y) * 0.15;
+    float edge = e * 1.5 - 0.25;
+    float m = smoothstep(edge + 0.25, edge - 0.25, d);
     col = mix(A(uv), B(uv), m);
-    line = exp(-abs(uv.x - e) * 240.0) * arc;
+    col += vec3(1.0, 0.96, 0.94) * exp(-pow((d - edge) * 7.0, 2.0)) * arc * 0.12;
   } else if (mode == 1) {
-    // Empuje: la actual sale por la izquierda y la nueva entra, de corrido.
-    float e = smoothstep(0.0, 1.0, p);
-    float x = uv.x + e;
-    col = x < 1.0 ? A(vec2(x, uv.y)) : B(vec2(x - 1.0, uv.y));
-    line = exp(-abs(uv.x - (1.0 - e)) * 320.0) * arc * 0.7;
+    // Deslizamiento: la nueva cubre a la actual desde la derecha; la actual se aleja más lento y se oscurece.
+    float x = 1.0 - e;
+    if (uv.x > x) {
+      col = B(vec2(uv.x - x, uv.y));
+      col *= 1.0 - exp(-(uv.x - x) * 40.0) * 0.25;
+    } else {
+      col = A(vec2(uv.x + e * 0.35, uv.y)) * (1.0 - e * 0.55);
+    }
   } else if (mode == 2) {
-    // Costillas de vidrio: franjas verticales que refractan y cambian escalonadas.
-    float n = 14.0;
-    float i = floor(uv.x * n);
-    float lp = clamp(p * 1.7 - (i / n) * 0.7, 0.0, 1.0);
+    // Vidrio estriado: franjas verticales que refractan mientras cambia, en ola de izquierda a derecha.
+    float n = 12.0;
     float f = fract(uv.x * n);
+    float lp = clamp(p * 1.5 - (floor(uv.x * n) / n) * 0.5, 0.0, 1.0);
     float bend = sin(lp * 3.14159265);
-    vec2 off = vec2((f - 0.5) * 0.07 * bend, 0.0);
-    col = mix(A(uv + off), B(uv - off), smoothstep(0.35, 0.65, lp));
-    col += bend * 0.07 * (1.0 - abs(f - 0.5) * 2.0);
+    vec2 off = vec2((f - 0.5) * 0.05 * bend, 0.0);
+    col = mix(A(uv + off), B(uv - off), smoothstep(0.2, 0.8, lp));
+    col += bend * 0.05 * (1.0 - abs(f - 0.5) * 2.0);
   } else if (mode == 3) {
-    // Iris desde el centro.
+    // Iris suave desde el centro.
     vec2 d = (uv - 0.5) * vec2(aspect, 1.0);
     float r = length(d);
-    float R = p * (length(vec2(aspect, 1.0)) * 0.55 + 0.05);
-    float m = smoothstep(R, R - 0.02, r);
-    col = mix(A(uv), B(uv), m);
-    line = exp(-abs(r - R) * 160.0) * arc * 0.8;
+    float R = e * (length(vec2(aspect, 1.0)) * 0.6 + 0.25);
+    col = mix(A(uv), B(uv), smoothstep(R, R - 0.25, r));
   } else if (mode == 4) {
-    // Pixeles LED que se encienden al azar.
-    vec2 cell = floor(uv * vec2(46.0 * aspect, 46.0));
-    float h = hash(cell + seed);
-    float m = smoothstep(h - 0.08, h + 0.08, p * 1.16 - 0.08);
-    col = mix(A(uv), B(uv), m);
-    col += (1.0 - abs(m * 2.0 - 1.0)) * 0.1;
+    // Acercamiento con desenfoque: la actual crece y se desenfoca; la nueva llega desde un poco más grande.
+    vec2 ua = (uv - 0.5) / (1.0 + e * 0.12) + 0.5;
+    vec2 ub = (uv - 0.5) / (1.0 + (1.0 - e) * 0.08) + 0.5;
+    col = mix(Ab(ua, arc * 0.012), Bb(ub, arc * 0.012), e);
   } else if (mode == 5) {
-    // Se abre desde el centro como dos puertas.
+    // Se abre desde el centro, con borde difuso.
     float d = abs(uv.x - 0.5) * 2.0;
-    float e = p * 1.06;
-    float m = smoothstep(e + 0.006, e - 0.006, d);
-    col = mix(A(uv), B(uv), m);
-    line = exp(-abs(d - e) * 200.0) * arc;
+    col = mix(A(uv), B(uv), smoothstep(e * 1.3, e * 1.3 - 0.3, d));
   } else if (mode == 6) {
-    // Persianas horizontales escalonadas.
-    float rows = 9.0;
-    float i = floor(uv.y * rows);
-    float lp = clamp(p * 1.6 - (1.0 - i / rows) * 0.6, 0.0, 1.0);
-    float m = step(1.0 - lp, fract(uv.y * rows));
-    col = mix(A(uv), B(uv), m);
+    // Cortina: la nueva sube desde abajo con un poco de paralaje y la actual se desvanece.
+    float edge = e * 1.2 - 0.1;
+    float m = smoothstep(edge - 0.1, edge + 0.1, 1.0 - uv.y + 0.0);
+    m = 1.0 - m;
+    vec3 b = B(vec2(uv.x, uv.y + (1.0 - e) * 0.08));
+    col = mix(A(uv) * (1.0 - e * 0.4), b, m);
   } else {
-    float e = smoothstep(0.0, 1.0, p);
-    col = mix(A(uv), B(uv), e) * (1.0 + arc * 0.1);
+    // Fundido por luminosidad: las luces de la nueva foto aparecen primero, las sombras al final.
+    vec3 b = B(uv);
+    float l = luma(b);
+    float m = smoothstep(l - 0.2, l + 0.2, e * 1.4 - 0.2);
+    col = mix(A(uv), b, m);
   }
-  col += vec3(1.0, 0.97, 0.92) * line;
-  // Rejilla de pixeles LED: solo se nota de cerca (se apaga con la distancia para evitar moiré).
-  vec2 g = local * res;
-  vec2 fw = fwidth(g);
-  float grid = smoothstep(0.0, 0.22, fract(g.x)) * smoothstep(0.0, 0.22, fract(g.y));
-  float amp = 0.1 * (1.0 - smoothstep(0.12, 0.45, max(fw.x, fw.y)));
-  col *= 1.0 - amp * (1.0 - grid);
-  // Borde un poco más oscuro, como un panel real.
-  vec2 e2 = smoothstep(vec2(0.0), vec2(0.015), local) * smoothstep(vec2(0.0), vec2(0.015), 1.0 - local);
-  col *= mix(0.82, 1.0, e2.x * e2.y);
-  col *= 0.9 * bright * (1.0 + hover * 0.1);
+  // Borde apenas más oscuro, como un panel real.
+  vec2 e2 = smoothstep(vec2(0.0), vec2(0.01), local) * smoothstep(vec2(0.0), vec2(0.01), 1.0 - local);
+  col *= mix(0.85, 1.0, e2.x * e2.y);
+  col *= 0.92 * bright * (1.0 + hover * 0.08);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -200,10 +204,10 @@ export class Screen {
       seed: { value: Math.random() * 100 },
     };
     this.current = program.slides[0];
-    this.transDur = 1.9;
+    this.transDur = 2.4;
   }
 
-  /** Crea una pieza física con su parte del canvas. res: tamaño en metros (para la rejilla LED). */
+  /** Crea una pieza física con su parte del canvas. */
   addPart(geometry: THREE.BufferGeometry, part: { uvOff?: [number, number]; uvScale?: [number, number]; flipX?: boolean; meters: [number, number] }) {
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT,
@@ -213,7 +217,6 @@ export class Screen {
         uvOff: { value: new THREE.Vector2(...(part.uvOff ?? [0, 0])) },
         uvScale: { value: new THREE.Vector2(...(part.uvScale ?? [1, 1])) },
         flipX: { value: part.flipX ? 1 : 0 },
-        res: { value: new THREE.Vector2(part.meters[0] * 64, part.meters[1] * 64) },
       },
       toneMapped: false,
       fog: false,
@@ -227,7 +230,7 @@ export class Screen {
     return mesh;
   }
 
-  /** Prepara la primera diapositiva y enciende la pantalla (con un parpadeo, como un LED real). */
+  /** Prepara la primera diapositiva y enciende la pantalla. */
   async start(now: number) {
     const s = this.program.slides[0];
     await this.prepare(s, this.canvasA, this.texA);
@@ -263,11 +266,10 @@ export class Screen {
 
   update(now: number, dt: number, active: boolean, reduced: boolean) {
     const u = this.shared;
-    // Encendido: sube con dos parpadeos cortos.
+    // Encendido: sube suave en un segundo.
     if (this.state !== 'off') {
-      const t = now - this.powerAt;
-      const flick = t < 0.5 ? (Math.sin(t * 60) > 0.2 ? 0.7 : 0.15) * Math.min(1, t * 4) : Math.min(1, 0.7 + (t - 0.5) * 1.5);
-      this.bright = reduced ? 1 : flick;
+      const t = Math.min(1, (now - this.powerAt) / 1.1);
+      this.bright = reduced ? 1 : t * t * (3 - 2 * t);
     }
     u['bright'].value = this.bright;
     u['hover'].value += (this.hoverTarget - u['hover'].value) * Math.min(1, dt * 8);

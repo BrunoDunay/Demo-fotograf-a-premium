@@ -24,7 +24,7 @@ import { Reveal } from '../shared/reveal';
             una pantalla curva y gente mirando. Toca una pantalla y la foto es tuya por un momento.
           </p>
           <a routerLink="/galeria" class="btn btn-light" data-reveal>
-            Entrar a la galería <app-icon name="arrow-right" [size]="16" />
+            <span class="btn-t">Entrar a la galería</span> <app-icon name="arrow-right" [size]="16" />
           </a>
         </div>
 
@@ -56,7 +56,7 @@ import { Reveal } from '../shared/reveal';
     .grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(32px, 5vw, 80px); align-items: center; }
     .copy { display: grid; gap: 20px; justify-items: start; }
     .title { font-size: var(--text-2xl); }
-    .title em { display: block; color: var(--color-champagne-soft); }
+    .title em { display: block; color: var(--color-accent-soft); }
 
     .room-link { display: block; perspective: 900px; }
     .room {
@@ -65,12 +65,12 @@ import { Reveal } from '../shared/reveal';
       transform-style: preserve-3d;
       transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
       transition: transform 900ms var(--ease-out);
-      background: radial-gradient(70% 60% at 50% 45%, #1a1a1c, #050506 75%);
+      background: radial-gradient(70% 60% at 50% 45%, #161c2c, #04060c 75%);
       overflow: hidden;
       border-radius: 4px;
       box-shadow: 0 0 0 1px var(--color-line-night), var(--shadow-night);
     }
-    .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 34%; background: linear-gradient(#0e0e0f, #19191a); }
+    .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 34%; background: linear-gradient(#0a0d16, #141a26); }
     .floor::after { content: ''; position: absolute; inset: 0; background: radial-gradient(50% 70% at 50% 0%, rgb(255 250 240 / 16%), transparent 70%); }
     .ceiling { position: absolute; left: 0; right: 0; top: 0; height: 16%; }
     .beam { position: absolute; top: 34%; left: calc(8% + var(--i) * 16.8%); width: 9%; height: 2px; background: rgb(255 255 255 / 55%); box-shadow: 0 0 12px rgb(255 255 255 / 60%); }

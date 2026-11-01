@@ -20,8 +20,8 @@ const KEY = 'astor-cookies';
           <a routerLink="/cookies">Leer la política</a>.
         </p>
         <div class="actions">
-          <button type="button" class="btn btn-line" (click)="choose('necesarias')">Solo necesarias</button>
-          <button type="button" class="btn btn-ink" (click)="choose('todas')">Aceptar todas</button>
+          <button type="button" class="btn btn-line" (click)="choose('necesarias')"><span class="btn-t">Solo necesarias</span></button>
+          <button type="button" class="btn btn-ink" (click)="choose('todas')"><span class="btn-t">Aceptar todas</span></button>
         </div>
       </aside>
     }

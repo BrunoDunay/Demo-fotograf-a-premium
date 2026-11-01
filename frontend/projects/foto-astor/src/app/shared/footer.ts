@@ -54,7 +54,7 @@ import { MotionToggle } from './motion-toggle';
     .foot { position: relative; overflow: hidden; padding-block: 96px 28px; }
     .top { position: relative; display: grid; grid-template-columns: 1.4fr 1fr 1.3fr; gap: 48px; }
     .sign { display: grid; gap: 14px; align-content: start; font-size: 22px; }
-    .line { font-size: clamp(2.6rem, 5vw, 3.6rem); color: var(--color-champagne-soft); margin-top: 6px; }
+    .line { font-size: clamp(2.6rem, 5vw, 3.6rem); color: var(--color-accent-soft); margin-top: 6px; }
     .small { font-size: 0.92rem; color: var(--color-on-night-2); max-width: 30ch; }
     .col { display: grid; gap: 10px; align-content: start; font-size: 0.95rem; }
     .head { color: var(--color-on-night-2); margin-bottom: 6px; }

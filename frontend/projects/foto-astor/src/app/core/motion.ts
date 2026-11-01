@@ -51,6 +51,7 @@ export class Motion {
       gsap.ticker.lagSmoothing(0);
     }
     document.addEventListener('click', this.onAnchorClick, true);
+    this.enhanceButtons();
 
     // Al navegar con fragmento (/#resenas) se desplaza con suavidad; al cambiar de página vuelve arriba.
     let lastPath = location.pathname;
@@ -89,6 +90,58 @@ export class Motion {
     if (this.lenis) this.lenis.scrollTo(target, { offset, immediate, duration: 1.4 });
     else if (typeof target === 'number') window.scrollTo({ top: target, behavior: immediate ? 'auto' : 'smooth' });
     else window.scrollTo({ top: target.getBoundingClientRect().top + scrollY + offset, behavior: immediate ? 'auto' : 'smooth' });
+  }
+
+  /**
+   * Botones vivos (el texto que rueda va en <span class="btn-t"> en cada plantilla). Con mouse, el relleno nace
+   * donde entró el cursor, se retira por donde salió y el botón se deja jalar un poco (magnético).
+   */
+  private enhanceButtons() {
+    if (!hasFinePointer()) return;
+    let active: HTMLElement | null = null;
+    const place = (btn: HTMLElement, e: PointerEvent, pull: boolean) => {
+      const r = btn.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      btn.style.setProperty('--mx', `${x}px`);
+      btn.style.setProperty('--my', `${y}px`);
+      if (pull && !prefersReducedMotion()) {
+        btn.style.setProperty('--tx', `${((x - r.width / 2) * 0.18).toFixed(1)}px`);
+        btn.style.setProperty('--ty', `${((y - r.height / 2) * 0.3).toFixed(1)}px`);
+      }
+    };
+    document.addEventListener(
+      'pointerover',
+      (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLElement>('.btn');
+        if (btn === active) return;
+        if (active) this.releaseButton(active, e);
+        active = btn;
+        if (btn) place(btn, e, false);
+      },
+      { passive: true },
+    );
+    document.addEventListener('pointermove', (e) => active && place(active, e, true), { passive: true });
+    document.addEventListener(
+      'pointerout',
+      (e) => {
+        if (!active) return;
+        const to = e.relatedTarget as HTMLElement | null;
+        if (to && active.contains(to)) return;
+        this.releaseButton(active, e);
+        active = null;
+      },
+      { passive: true },
+    );
+  }
+
+  private releaseButton(btn: HTMLElement, e: PointerEvent) {
+    // El relleno se retira hacia el punto por donde salió el cursor.
+    const r = btn.getBoundingClientRect();
+    btn.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    btn.style.setProperty('--my', `${e.clientY - r.top}px`);
+    btn.style.setProperty('--tx', '0px');
+    btn.style.setProperty('--ty', '0px');
   }
 
   // Los enlaces "#seccion" se desplazan con Lenis en lugar del salto nativo.

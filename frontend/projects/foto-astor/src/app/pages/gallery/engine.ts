@@ -8,6 +8,11 @@ import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { CUBE_BACK, CUBE_FRONT, PANORAMA, Program, SQUARES, TOTEMS, TRIPTYCH, WELCOME, programPhotos } from './programs';
 import { Screen } from './screen';
 
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
 export interface GalleryHooks {
   onRoom(index: number): void;
   onHover(on: boolean): void;
@@ -27,30 +32,34 @@ export interface GalleryApi {
   destroy(): void;
 }
 
-interface Key {
+interface Stop {
   pos: [number, number, number];
   look: [number, number, number];
   room: number;
-  dwell: boolean;
   /** En pantallas verticales, cuánto se puede alejar la cámara de lo que mira (máximo). */
   pk?: number;
+  /** Llegar a este encuadre con un corte (fundido) aunque sea la misma sala. */
+  cut?: boolean;
 }
 
-/** Recorrido: estaciones donde la cámara se detiene (dwell) y puntos de paso para rodear obstáculos. */
-const KEYS: Key[] = [
-  { pos: [0, 1.65, 15], look: [0, 2.3, 0], room: 0, dwell: true, pk: 1.2 },
-  { pos: [0.6, 1.62, 7], look: [0, 2.35, 0], room: 0, dwell: true, pk: 1.6 },
-  { pos: [6.4, 1.65, 0.6], look: [2.5, 2.0, -6], room: 1, dwell: false, pk: 1 },
-  { pos: [4.7, 1.65, -4.3], look: [-0.8, 2.0, -9.6], room: 1, dwell: true, pk: 1.25 },
-  { pos: [-0.3, 1.65, -11.2], look: [-1.0, 2.0, -18], room: 1, dwell: true, pk: 1.3 },
-  { pos: [0.4, 1.65, -20.8], look: [0, 1.85, -29], room: 2, dwell: true, pk: 1.45 },
-  { pos: [5.7, 1.65, -26.6], look: [0.5, 1.85, -29.5], room: 2, dwell: false, pk: 1 },
-  { pos: [2.4, 1.65, -37.4], look: [0, 1.85, -29.6], room: 2, dwell: true, pk: 1.15 },
-  { pos: [0.6, 1.62, -40.2], look: [7.9, 2.0, -41.2], room: 3, dwell: true, pk: 1.12 },
-  { pos: [1.2, 1.5, -40.6], look: [-4.2, 0.85, -42], room: 3, dwell: true, pk: 1.5 },
-  { pos: [0, 1.65, -44.6], look: [0, 2.15, -59], room: 4, dwell: true, pk: 1 },
-  { pos: [0.3, 1.62, -50.2], look: [-3.6, 2.0, -58.4], room: 4, dwell: true, pk: 1 },
-  { pos: [0, 1.62, -51.4], look: [0, 2.25, -60], room: 4, dwell: true, pk: 1 },
+/**
+ * Recorrido como cambios de escena dentro de la misma galería: encuadres compuestos (estaciones). Dentro de una
+ * sala la cámara se desliza de un encuadre al otro; entre salas hay un fundido breve a negro (corte de escena),
+ * en lugar de caminar por los pasillos.
+ */
+const STOPS: Stop[] = [
+  { pos: [0, 1.65, 15], look: [0, 2.3, 0], room: 0, pk: 1.2 },
+  { pos: [0.6, 1.62, 7.5], look: [0, 2.35, 0], room: 0, pk: 1.6 },
+  { pos: [4.7, 1.65, -4.3], look: [-0.8, 2.0, -9.6], room: 1, pk: 1.25 },
+  { pos: [-0.3, 1.65, -11.2], look: [-1.0, 2.0, -18], room: 1, pk: 1.3 },
+  { pos: [0.4, 1.65, -20.8], look: [0, 1.85, -29], room: 2, pk: 1.45 },
+  { pos: [6.2, 1.65, -22.8], look: [1.2, 1.85, -28.2], room: 2, pk: 1 },
+  { pos: [2.4, 1.65, -37.4], look: [0, 1.85, -29.6], room: 2, pk: 1.15, cut: true },
+  { pos: [0.6, 1.62, -40.2], look: [7.9, 2.0, -41.2], room: 3, pk: 1.12 },
+  { pos: [1.2, 1.5, -40.6], look: [-4.2, 0.85, -42], room: 3, pk: 1.5 },
+  { pos: [0, 1.65, -44.6], look: [0, 2.15, -59], room: 4, pk: 1 },
+  { pos: [0.3, 1.62, -50.2], look: [-3.6, 2.0, -58.4], room: 4, pk: 1 },
+  { pos: [0, 1.62, -51.4], look: [0, 2.25, -60], room: 4, pk: 1 },
 ];
 
 const SILHOUETTES: { name: string; x: number; z: number; h: number }[] = [
@@ -68,10 +77,14 @@ const SILHOUETTES: { name: string; x: number; z: number; h: number }[] = [
   { name: 'sil-vestido', x: -3.4, z: -57.9, h: 1.62 },
 ];
 
-const smoother = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+// Avance entre encuadres: suave al salir y al llegar, pero sin detenerse del todo (no se "atora" el scroll).
+const glide = (t: number) => {
+  const s = t * t * (3 - 2 * t);
+  return t * 0.35 + s * 0.65;
+};
 
-/** Ruido suave repetible para el concreto del piso y la distorsión del reflejo. */
-function noiseTexture(size = 256) {
+/** Variación muy suave y grande (manchas del concreto pulido), sin grano fino. */
+function softNoise(size = 256) {
   const data = new Uint8Array(size * size * 4);
   const grid = (gx: number, gy: number, n: number) => {
     const x = ((gx % n) + n) % n;
@@ -94,30 +107,24 @@ function noiseTexture(size = 256) {
   };
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      let v = 0;
-      let amp = 0.5;
-      let n = 8;
-      for (let o = 0; o < 4; o++) {
-        v += value((x / size) * n, (y / size) * n, n) * amp;
-        amp *= 0.5;
-        n *= 2;
-      }
-      const w = value((x / size) * 32 + 7, (y / size) * 32 + 3, 32);
+      const v = value((x / size) * 4, (y / size) * 4, 4) * 0.7 + value((x / size) * 8, (y / size) * 8, 8) * 0.3;
+      const g = Math.round(150 + v * 70);
       const i = (y * size + x) * 4;
-      data[i] = Math.round(v * 255);
-      data[i + 1] = Math.round(w * 255);
-      data[i + 2] = Math.round(((v + w) / 2) * 255);
+      data[i] = data[i + 1] = data[i + 2] = g;
       data[i + 3] = 255;
     }
   }
   const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.generateMipmaps = true;
   tex.needsUpdate = true;
   return tex;
 }
 
-// Reflejo del piso pulido: borroso en vertical (como el concreto encerado), distorsionado por el ruido y con un halo
-// amplio que hace de "luz" que las pantallas echan al piso. Se suma (blending aditivo) sobre el piso iluminado.
+// Reflejo del piso pulido: desenfoque suave en ambos ejes (sin distorsión), más fuerte a ras del piso (Fresnel)
+// y que se apaga con la distancia. Se suma sobre el piso iluminado.
 const REFLECT_VERT = /* glsl */ `
 uniform mat4 textureMatrix;
 varying vec4 vUv;
@@ -131,77 +138,150 @@ void main() {
 const REFLECT_FRAG = /* glsl */ `
 uniform vec3 color;
 uniform sampler2D tDiffuse;
-uniform sampler2D tNoise;
 uniform float strength;
 uniform vec3 camPos;
 varying vec4 vUv;
 varying vec3 vWorld;
 void main() {
-  vec3 nz = texture2D(tNoise, vWorld.xz * 0.035).rgb;
-  vec2 uv = vUv.xy / vUv.w + (nz.rg - 0.5) * 0.007;
-  vec3 sharp = vec3(0.0);
+  vec2 uv = vUv.xy / vUv.w;
+  vec3 sum = vec3(0.0);
   float tot = 0.0;
-  for (int i = -5; i <= 5; i++) {
-    float w = 1.0 - abs(float(i)) / 6.0;
-    sharp += texture2D(tDiffuse, uv + vec2(0.0, float(i) * 0.004)).rgb * w;
-    tot += w;
+  for (int i = -3; i <= 3; i++) {
+    for (int j = -3; j <= 3; j++) {
+      vec2 o = vec2(float(i) * 0.0032, float(j) * 0.0055);
+      float w = exp(-float(i * i + j * j) / 6.0);
+      sum += texture2D(tDiffuse, uv + o).rgb * w;
+      tot += w;
+    }
   }
-  sharp /= tot;
-  vec3 wide = vec3(0.0);
-  for (int i = 0; i < 10; i++) {
-    float a = float(i) * 0.6283;
-    wide += texture2D(tDiffuse, uv + vec2(cos(a) * 0.045, sin(a) * 0.07)).rgb;
-  }
-  wide /= 10.0;
+  sum /= tot;
+  vec3 v = normalize(camPos - vWorld);
+  float fres = 0.25 + 0.75 * pow(1.0 - clamp(v.y, 0.0, 1.0), 3.0);
   float dist = length(vWorld.xz - camPos.xz);
-  float fade = 1.0 - smoothstep(10.0, 34.0, dist);
-  float rough = mix(0.55, 1.0, nz.b);
-  gl_FragColor = vec4((sharp * 0.3 * rough + wide * 0.2) * strength * fade * color, 1.0);
+  float fade = 1.0 - smoothstep(9.0, 30.0, dist);
+  gl_FragColor = vec4(sum * strength * fres * fade * color, 1.0);
 }
 `;
 
-// Último paso: viñeta, grano fino y negros apenas levantados (look de foto, no de render).
+// Último paso: viñeta suave y fundido a negro para los cortes entre salas. Sin grano.
 const GRADE = {
-  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, aspect: { value: 1 } },
+  uniforms: { tDiffuse: { value: null }, aspect: { value: 1 }, dip: { value: 0 } },
   vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */ `
-    uniform sampler2D tDiffuse; uniform float time; uniform float aspect; varying vec2 vUv;
-    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    uniform sampler2D tDiffuse; uniform float aspect; uniform float dip; varying vec2 vUv;
     void main() {
       vec3 c = texture2D(tDiffuse, vUv).rgb;
       vec2 d = (vUv - 0.5) * vec2(aspect, 1.0);
-      c *= mix(1.0, 0.42, smoothstep(0.35, 1.05, length(d)));
-      c += (hash(vUv * 1000.0 + time) - 0.5) * 0.012;
-      c = c * 0.97 + 0.006;
+      c *= mix(1.0, 0.6, smoothstep(0.45, 1.1, length(d)));
+      c *= 1.0 - dip;
       gl_FragColor = vec4(c, 1.0);
     }
   `,
 };
 
+/** Rotulación de pared (vinil): logo o nombre de sala en una textura de canvas transparente. */
+function signTexture(kind: 'logo' | 'room', a: string, b: string) {
+  const c = document.createElement('canvas');
+  c.width = 2048;
+  c.height = 1024;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#e9ecf3';
+  g.strokeStyle = '#e9ecf3';
+  g.textAlign = 'center';
+  const ls = (px: number) => ((g as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${px}px`);
+  if (kind === 'logo') {
+    // Estrella, órbita y la palabra.
+    g.lineWidth = 5;
+    g.globalAlpha = 0.7;
+    g.beginPath();
+    g.ellipse(1024, 470, 760, 170, (-8 * Math.PI) / 180, 0, Math.PI * 2);
+    g.stroke();
+    g.globalAlpha = 1;
+    g.font = '400 360px "Instrument Serif", serif';
+    ls(40);
+    g.fillText('ASTOR', 1044, 590);
+    star(g, 640, 290, 70);
+    g.font = '500 54px "Instrument Sans Variable", sans-serif';
+    ls(26);
+    g.fillText(a, 1024, 820);
+    g.globalAlpha = 0.65;
+    g.font = 'italic 400 64px "Instrument Serif", serif';
+    ls(0);
+    g.fillText(b, 1024, 920);
+  } else {
+    g.textAlign = 'left';
+    star(g, 120, 330, 34);
+    g.font = '500 58px "Instrument Sans Variable", sans-serif';
+    ls(24);
+    g.fillText(a.toUpperCase(), 190, 352);
+    g.font = '400 260px "Instrument Serif", serif';
+    ls(0);
+    g.fillText(b, 100, 620);
+    g.fillRect(104, 700, 260, 4);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
+function star(g: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  g.beginPath();
+  g.moveTo(x, y - s);
+  g.quadraticCurveTo(x + s * 0.1, y - s * 0.1, x + s, y);
+  g.quadraticCurveTo(x + s * 0.1, y + s * 0.1, x, y + s);
+  g.quadraticCurveTo(x - s * 0.1, y + s * 0.1, x - s, y);
+  g.quadraticCurveTo(x - s * 0.1, y - s * 0.1, x, y - s);
+  g.fill();
+}
+
+/** Proyección de luz (gobo) del logo sobre el piso: estrella y órbita, con borde suave. */
+function goboTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 1024;
+  const g = c.getContext('2d')!;
+  const grad = g.createRadialGradient(512, 512, 40, 512, 512, 500);
+  grad.addColorStop(0, 'rgba(255,245,240,0.18)');
+  grad.addColorStop(1, 'rgba(255,245,240,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 1024, 1024);
+  g.filter = 'blur(3px)';
+  g.strokeStyle = 'rgba(255,240,236,0.9)';
+  g.fillStyle = 'rgba(255,240,236,0.95)';
+  g.lineWidth = 6;
+  g.beginPath();
+  g.ellipse(512, 512, 430, 120, -0.15, 0, Math.PI * 2);
+  g.stroke();
+  star(g, 512, 512, 150);
+  g.beginPath();
+  g.arc(880, 380, 16, 0, Math.PI * 2);
+  g.fill();
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHooks, opts: { reduced: boolean }): Promise<GalleryApi> {
   const narrow = innerWidth < 760;
   const lowPower = narrow || (navigator.hardwareConcurrency ?? 8) <= 4;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, lowPower ? 1.25 : 1.6));
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, lowPower ? 1.5 : 2));
   renderer.toneMapping = THREE.NoToneMapping;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x040405);
-  scene.fog = new THREE.FogExp2(0x040405, 0.03);
+  scene.background = new THREE.Color(0x05060a);
+  scene.fog = new THREE.FogExp2(0x05060a, 0.022);
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 140);
 
-  const noise = noiseTexture();
-  const disposables: { dispose(): void }[] = [noise];
+  const disposables: { dispose(): void }[] = [];
   const track = <T extends { dispose(): void }>(d: T) => (disposables.push(d), d);
 
-  // ===== Sala =====
-  scene.add(new THREE.AmbientLight(0xffffff, 0.05));
-  const concrete = noise.clone();
-  concrete.repeat.set(10, 30);
-  concrete.needsUpdate = true;
-  disposables.push(concrete);
-  const floorMat = track(new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.62, metalness: 0, roughnessMap: concrete, bumpMap: concrete, bumpScale: 0.6 }));
+  // ===== Sala: piso de concreto pulido, muros de yeso oscuro y techo en penumbra =====
+  scene.add(new THREE.HemisphereLight(0x8a93b0, 0x0a0b10, 0.12));
+  const spots = track(softNoise());
+  spots.repeat.set(2, 6);
+  const floorMat = track(new THREE.MeshStandardMaterial({ color: 0x15171c, roughness: 0.62, metalness: 0, roughnessMap: spots }));
   const floor = new THREE.Mesh(track(new THREE.PlaneGeometry(40, 130)), floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, 0, -24);
@@ -209,8 +289,8 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
 
   const reflector = new Reflector(track(new THREE.PlaneGeometry(40, 130)), {
     clipBias: 0.003,
-    textureWidth: Math.round((innerWidth * renderer.getPixelRatio()) / (lowPower ? 3 : 2)),
-    textureHeight: Math.round((innerHeight * renderer.getPixelRatio()) / (lowPower ? 3 : 2)),
+    textureWidth: Math.round((innerWidth * renderer.getPixelRatio()) / (lowPower ? 2.5 : 1.6)),
+    textureHeight: Math.round((innerHeight * renderer.getPixelRatio()) / (lowPower ? 2.5 : 1.6)),
     color: 0xffffff,
     shader: {
       name: 'AstorFloor',
@@ -218,8 +298,7 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
         color: { value: null },
         tDiffuse: { value: null },
         textureMatrix: { value: null },
-        tNoise: { value: noise },
-        strength: { value: 1 },
+        strength: { value: 0.5 },
         camPos: { value: new THREE.Vector3() },
       },
       vertexShader: REFLECT_VERT,
@@ -234,14 +313,18 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
   reflMat.depthWrite = false;
   scene.add(reflector);
 
-  const wallMat = track(new THREE.MeshStandardMaterial({ color: 0x0c0c0d, roughness: 0.92 }));
-  const darkMat = track(new THREE.MeshStandardMaterial({ color: 0x0a0a0b, roughness: 0.55, metalness: 0.2 }));
+  const wallMat = track(new THREE.MeshStandardMaterial({ color: 0x272c38, roughness: 0.92 }));
+  const darkMat = track(new THREE.MeshStandardMaterial({ color: 0x0c0d11, roughness: 0.5, metalness: 0.25 }));
   const wallGeo = track(new THREE.PlaneGeometry(130, 6.6));
   for (const side of [-1, 1]) {
     const w = new THREE.Mesh(wallGeo, wallMat);
     w.rotation.y = -side * (Math.PI / 2);
     w.position.set(side * 8, 3.3, -24);
     scene.add(w);
+    // Zoclo oscuro al pie del muro.
+    const base = new THREE.Mesh(track(new THREE.BoxGeometry(0.04, 0.12, 130)), darkMat);
+    base.position.set(side * 7.98, 0.06, -24);
+    scene.add(base);
   }
   const endGeo = track(new THREE.PlaneGeometry(16, 6.6));
   const back = new THREE.Mesh(endGeo, wallMat);
@@ -251,42 +334,49 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
   front.rotation.y = Math.PI;
   front.position.set(0, 3.3, 19);
   scene.add(front);
-  const ceiling = new THREE.Mesh(track(new THREE.PlaneGeometry(16, 130)), track(new THREE.MeshBasicMaterial({ color: 0x050506 })));
+  const ceiling = new THREE.Mesh(track(new THREE.PlaneGeometry(16, 130)), track(new THREE.MeshBasicMaterial({ color: 0x030306 })));
   ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.set(0, 6.4, -24);
+  ceiling.position.set(0, 6.6, -24);
   scene.add(ceiling);
 
-  // Lámparas lineales cortas en el techo (dan perspectiva al caminar) y lámparas colgantes cilíndricas.
-  const stripMat = track(new THREE.MeshBasicMaterial({ color: new THREE.Color(0.95, 0.94, 0.9) }));
-  const stripGeo = track(new THREE.BoxGeometry(0.035, 0.015, 1.5));
-  const rows = [-5.2, -1.75, 1.75, 5.2];
-  const strips = new THREE.InstancedMesh(stripGeo, stripMat, rows.length * 26);
-  const m4 = new THREE.Matrix4();
-  let n = 0;
-  for (const x of rows) {
-    for (let z = 17; z > -61; z -= 3) m4.makeTranslation(x, 6.35, z), strips.setMatrixAt(n++, m4);
+  // Luz que baña los muros desde arriba (como en una galería real): conos suaves sobre la pared.
+  const washes: [number, number][] = lowPower
+    ? [[-1, 9], [1, -8], [-1, -34], [1, -47]]
+    : [[-1, 9], [1, 9], [1, -7], [-1, -14], [-1, -24], [1, -33], [-1, -38], [1, -48]];
+  for (const [side, z] of washes) {
+    const s = new THREE.SpotLight(0xffe9dc, 60, 9, 0.55, 1, 1.6);
+    s.position.set(side * 6.6, 6.3, z);
+    s.target.position.set(side * 8, 1.4, z);
+    scene.add(s, s.target);
   }
-  strips.count = n;
-  scene.add(strips);
-  const lampGeo = track(new THREE.CylinderGeometry(0.11, 0.11, 0.36, 20));
-  const lampGlow = track(new THREE.CircleGeometry(0.09, 20));
-  const cordGeo = track(new THREE.CylinderGeometry(0.006, 0.006, 1, 4));
-  const glowMat = track(new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 2.1, 1.9) }));
-  const lamps: [number, number, number][] = [
-    [-3.8, 5.0, 8], [-1.3, 4.7, 8.6], [1.3, 5.1, 8.2], [3.8, 4.8, 8.7],
-    [-4.5, 4.9, -37.2], [-2.2, 5.2, -38.6], [2.4, 4.8, -46.2], [4.6, 5.0, -45],
+
+  // Rotulación en vinil: el logo a la entrada y al fondo, y el nombre de cada sala en su muro.
+  const signs: [THREE.Texture, number, number, number, number, number][] = [
+    [signTexture('logo', 'EXPOSICIÓN PERMANENTE', 'Bodas, XV años y eventos sociales'), -7.97, 3.0, 9.5, Math.PI / 2, 4.4],
+    [signTexture('room', 'Sala II', 'Tótems'), 7.97, 2.6, -6.5, -Math.PI / 2, 3],
+    [signTexture('room', 'Sala III', 'La caja'), -7.97, 2.6, -23, Math.PI / 2, 3],
+    [signTexture('room', 'Sala IV', 'Detalles'), -7.97, 2.6, -36.2, Math.PI / 2, 3],
+    [signTexture('room', 'Sala V', 'Panorama'), 7.97, 2.6, -48.5, -Math.PI / 2, 3],
   ];
-  for (const [x, y, z] of lamps) {
-    const l = new THREE.Mesh(lampGeo, darkMat);
-    l.position.set(x, y, z);
-    const g = new THREE.Mesh(lampGlow, glowMat);
-    g.rotation.x = Math.PI / 2;
-    g.position.set(x, y - 0.181, z);
-    const cord = new THREE.Mesh(cordGeo, darkMat);
-    cord.scale.y = 6.4 - y - 0.18;
-    cord.position.set(x, (6.4 + y + 0.18) / 2, z);
-    scene.add(l, g, cord);
+  for (const [tex, x, y, z, ry, w] of signs) {
+    track(tex);
+    const m = new THREE.Mesh(track(new THREE.PlaneGeometry(w, w / 2)), track(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.82, depthWrite: false })));
+    m.position.set(x, y, z);
+    m.rotation.y = ry;
+    scene.add(m);
   }
+
+  // Proyecciones del logo en el piso (gobo), girando muy despacio.
+  const gobo = track(goboTexture());
+  const goboMat = track(new THREE.MeshBasicMaterial({ map: gobo, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.55 }));
+  const gobos = [new THREE.Vector3(0, 0.01, 10.5), new THREE.Vector3(0, 0.01, -46.4), new THREE.Vector3(3.2, 0.01, -20.6)].map((p, i) => {
+    const m = new THREE.Mesh(track(new THREE.PlaneGeometry(3.4, 3.4)), goboMat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.copy(p);
+    m.userData['spin'] = i % 2 ? -0.03 : 0.04;
+    scene.add(m);
+    return m;
+  });
 
   // ===== Pantallas =====
   const screens: Screen[] = [];
@@ -474,50 +564,77 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
     }),
   );
 
-  // ===== Postproceso =====
-  const composer = new EffectComposer(renderer);
+  // ===== Postproceso (con antialiasing MSAA: bordes limpios, sin "pixeleado") =====
+  const target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: lowPower ? 2 : 4 });
+  const composer = new EffectComposer(renderer, target);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), lowPower ? 0.26 : 0.36, 0.55, 0.8);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), lowPower ? 0.18 : 0.24, 0.6, 0.86);
   composer.addPass(bloom);
   const grade = new ShaderPass(GRADE);
   composer.addPass(grade);
   composer.addPass(new OutputPass());
 
   // ===== Recorrido =====
-  const posCurve = new THREE.CatmullRomCurve3(KEYS.map((k) => new THREE.Vector3(...k.pos)), false, 'centripetal');
-  const lookCurve = new THREE.CatmullRomCurve3(KEYS.map((k) => new THREE.Vector3(...k.look)), false, 'centripetal');
-  const dwell = KEYS.map((k, i) => (k.dwell ? i : -1)).filter((i) => i >= 0);
-  const tOf = (i: number) => i / (KEYS.length - 1);
   let portraitK = 1;
-  let target = 0;
+  let goal = 0;
   let smooth = 0;
+  let vel = 0;
   const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
   const pos = new THREE.Vector3();
   const look = new THREE.Vector3();
   const tmp = new THREE.Vector3();
+  const pa = new THREE.Vector3();
+  const pb = new THREE.Vector3();
+  const la = new THREE.Vector3();
+  const lb = new THREE.Vector3();
+  let maxK = 1.6;
+  let dip = 0;
 
+  /** Encuadre para un avance q (0–1). Devuelve la sala que se ve. */
   function pathAt(q: number) {
-    const segs = dwell.length - 1;
+    const segs = STOPS.length - 1;
     const sq = Math.min(segs - 1e-6, Math.max(0, q * segs));
     const i = Math.floor(sq);
     const f = sq - i;
-    // Se detiene un momento en cada estación: el inicio y el final de cada tramo no avanzan.
-    const fe = smoother(Math.min(1, Math.max(0, (f - 0.14) / 0.72)));
-    const t = tOf(dwell[i]) + (tOf(dwell[i + 1]) - tOf(dwell[i])) * fe;
-    posCurve.getPoint(t, pos);
-    lookCurve.getPoint(t, look);
-    const a = KEYS[dwell[i]];
-    const b = KEYS[dwell[i + 1]];
-    maxK = (a.pk ?? 1.6) + ((b.pk ?? 1.6) - (a.pk ?? 1.6)) * fe;
-    return (fe < 0.5 ? a : b).room;
+    const a = STOPS[i];
+    const b = STOPS[i + 1];
+    pa.set(...a.pos);
+    pb.set(...b.pos);
+    la.set(...a.look);
+    lb.set(...b.look);
+    if (a.room === b.room && !b.cut) {
+      // Misma sala: la cámara se desliza al siguiente encuadre.
+      const e = glide(f);
+      pos.lerpVectors(pa, pb, e);
+      look.lerpVectors(la, lb, e);
+      maxK = (a.pk ?? 1.6) + ((b.pk ?? 1.6) - (a.pk ?? 1.6)) * e;
+      dip = 0;
+      return a.room;
+    }
+    // Otra sala: se acerca un poco, funde a negro, y aparece en la nueva sala terminando de acercarse.
+    dip = opts.reduced ? 0 : 1 - smoothstep(0.04, 0.2, Math.abs(f - 0.5));
+    if (f < 0.5) {
+      const k = glide(f * 2);
+      tmp.subVectors(la, pa).normalize();
+      pos.copy(pa).addScaledVector(tmp, k * 1.6);
+      look.copy(la);
+      maxK = a.pk ?? 1.6;
+      return a.room;
+    }
+    const k = glide((1 - f) * 2);
+    tmp.subVectors(lb, pb).normalize();
+    pos.copy(pb).addScaledVector(tmp, -k * 1.6);
+    look.copy(lb);
+    maxK = b.pk ?? 1.6;
+    return b.room;
   }
-  let maxK = 1.6;
 
   function resize() {
     const w = canvas.clientWidth || innerWidth;
     const h = canvas.clientHeight || innerHeight;
     renderer.setSize(w, h, false);
     composer.setSize(w, h);
+    target.setSize(w * renderer.getPixelRatio(), h * renderer.getPixelRatio());
     bloom.resolution.set(w / 2, h / 2);
     camera.aspect = w / h;
     const portrait = camera.aspect < 0.85;
@@ -530,7 +647,7 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
 
   // ===== Carga: primero lo que se ve al entrar, luego el resto =====
   await Promise.all(
-    ['400 40px "Bodoni Moda Variable"', 'italic 400 40px "Bodoni Moda Variable"', '500 20px "Oswald Variable"', '400 40px "Mrs Saint Delafield"', '400 20px "Hanken Grotesk Variable"'].map((f) =>
+    ['400 40px "Instrument Serif"', 'italic 400 40px "Instrument Serif"', '500 20px "Instrument Sans Variable"', '400 40px "Mrs Saint Delafield"', '400 20px "Hanken Grotesk Variable"'].map((f) =>
       document.fonts.load(f).catch(() => null),
     ),
   );
@@ -589,7 +706,13 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
     if (!visible) return;
     const dt = Math.min(0.05, clock.getDelta());
     const now = clock.getElapsedTime();
-    smooth += (target - smooth) * Math.min(1, dt * (opts.reduced ? 10 : 3.2));
+    // Resorte amortiguado: sigue al scroll sin tirones ni arranques bruscos.
+    if (opts.reduced) smooth = goal;
+    else {
+      const k = 18;
+      vel += ((goal - smooth) * k - vel * 2 * Math.sqrt(k)) * dt;
+      smooth += vel * dt;
+    }
     const room = pathAt(smooth);
     if (room !== lastRoom) {
       lastRoom = room;
@@ -609,12 +732,12 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
     }
     mouse.x += (mouse.tx - mouse.x) * Math.min(1, dt * 2.5);
     mouse.y += (mouse.ty - mouse.y) * Math.min(1, dt * 2.5);
-    const bob = opts.reduced ? 0 : Math.sin(now * 0.7) * 0.012;
+    const bob = opts.reduced ? 0 : Math.sin(now * 0.5) * 0.008;
     camera.position.set(pos.x, pos.y + bob, pos.z);
     // Mirar alrededor con el cursor (girar un poco la cabeza).
     tmp.subVectors(look, pos);
     const right = new THREE.Vector3().crossVectors(tmp, camera.up).normalize();
-    look.addScaledVector(right, mouse.x * tmp.length() * 0.09).y += mouse.y * tmp.length() * 0.05;
+    look.addScaledVector(right, mouse.x * tmp.length() * 0.06).y += mouse.y * tmp.length() * 0.035;
     camera.lookAt(look);
 
     for (const s of screens) {
@@ -625,11 +748,12 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
       const c = l.screen.color;
       l.light.color.copy(c);
       const lum = 0.3 + (c.r + c.g + c.b) / 3;
-      l.light.intensity = l.screen.ready ? l.power * lum : 0;
+      l.light.intensity = l.screen.ready ? l.power * lum * 0.55 : 0;
     }
     for (const m of sils) m.rotation.y = Math.atan2(camera.position.x - m.position.x, camera.position.z - m.position.z);
     (reflMat.uniforms['camPos'].value as THREE.Vector3).copy(camera.position);
-    grade.uniforms['time'].value = now % 100;
+    grade.uniforms['dip'].value = dip;
+    for (const g of gobos) g.rotation.z += (g.userData['spin'] as number) * dt;
 
     if (pendingPointer) {
       const h = hit(pendingPointer.x, pendingPointer.y);
@@ -648,7 +772,7 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
 
   return {
     setProgress(q) {
-      target = Math.max(0, Math.min(1, q));
+      goal = Math.max(0, Math.min(1, q));
     },
     pointer(x, y, fine) {
       if (fine) {
@@ -681,6 +805,7 @@ export async function createGallery(canvas: HTMLCanvasElement, hooks: GalleryHoo
       for (const d of disposables) d.dispose();
       reflector.dispose();
       composer.dispose();
+      target.dispose();
       renderer.dispose();
     },
   };

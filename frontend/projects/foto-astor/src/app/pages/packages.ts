@@ -39,17 +39,25 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
       <section class="group" [id]="g.id" [attr.aria-labelledby]="'g-' + g.id">
         <div class="container">
           <header class="group-head" data-reveal>
-            <h2 [id]="'g-' + g.id" class="group-title">{{ g.name }} <span class="script">{{ g.script }}</span></h2>
+            <h2 [id]="'g-' + g.id" class="group-title">{{ g.name }} <em>{{ g.script }}</em></h2>
           </header>
           <ul class="tickets">
             @for (p of byGroup(g.name); track p.id; let i = $index) {
               <li class="ticket" [class.featured]="p.featured" [class.open]="open() === p.id" data-reveal [revealDelay]="i * 80">
                 <figure class="pic">
                   <img [src]="src(p.photo)" [alt]="alt(p.photo)" loading="lazy" />
-                  @if (p.featured) {
-                    <span class="badge label">El más pedido</span>
-                  }
                 </figure>
+                @if (p.featured) {
+                  <div class="seal" aria-label="El más pedido">
+                    <svg viewBox="0 0 120 120" aria-hidden="true">
+                      <defs><path [attr.id]="'seal-' + p.id" d="M60 60m-45 0a45 45 0 1 1 90 0a45 45 0 1 1-90 0" /></defs>
+                      <circle cx="60" cy="60" r="58" class="bg" />
+                      <text><textPath [attr.href]="'#seal-' + p.id">EL MÁS PEDIDO · EL QUE MÁS CONVIENE ·</textPath></text>
+                    </svg>
+                    <svg class="st" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
+                  </div>
+                  <p class="ribbon label"><span>★ Recomendado</span></p>
+                }
                 <div class="info">
                   <p class="hours">{{ p.hours }}</p>
                   <h3 class="name">{{ p.name }}</h3>
@@ -58,7 +66,7 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
                     <button type="button" class="more" [attr.aria-expanded]="open() === p.id" [attr.aria-controls]="'inc-' + p.id" (click)="toggle(p.id)">
                       Qué incluye <app-icon name="chevron-down" [size]="16" />
                     </button>
-                    <button type="button" class="btn btn-ink want" (click)="want(p)">Me interesa</button>
+                    <button type="button" class="btn want" [class.btn-ink]="!p.featured" [class.btn-accent]="p.featured" (click)="want(p)"><span class="btn-t">Me interesa</span></button>
                   </div>
                   <div class="includes" [id]="'inc-' + p.id" role="region">
                     <ul>
@@ -73,6 +81,9 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
                   <span class="from script">desde</span>
                   <span class="amount">{{ money(p.price) }}</span>
                   <span class="label cur">MXN</span>
+                  @if (p.featured) {
+                    <span class="value">La mejor relación entre horas, entregables y precio</span>
+                  }
                 </div>
               </li>
             }
@@ -145,7 +156,7 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
     .hero { padding: 150px 0 40px; }
     .hero .container { display: grid; gap: 20px; }
     .title { font-size: var(--text-3xl); }
-    .title em { color: var(--color-champagne); }
+    .title em { color: var(--color-accent); }
     .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
     .chip { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--color-line-2); font-family: var(--font-label); font-size: 0.74rem; letter-spacing: 0.18em; text-transform: uppercase; transition: background-color 300ms ease, color 300ms ease; }
     .chip:active { scale: 0.96; }
@@ -154,23 +165,48 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
     .group { padding-block: 56px; scroll-margin-top: 90px; }
     .group-head { margin-bottom: 28px; }
     .group-title { font-size: var(--text-2xl); display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 18px; }
-    .group-title .script { font-size: 0.9em; color: var(--color-champagne); }
+    .group-title em { font-size: 0.9em; color: var(--color-accent); }
     .tickets { display: grid; gap: 22px; }
     .ticket {
       position: relative;
       display: grid;
       grid-template-columns: 220px minmax(0, 1fr) 210px;
       gap: 0;
-      background: #fbfaf7;
+      background: var(--color-card);
       border-radius: 14px;
       box-shadow: var(--shadow-paper);
       transition: box-shadow 400ms ease, translate 400ms var(--ease-out);
     }
-    .ticket.featured { box-shadow: 0 0 0 1.5px var(--color-champagne), var(--shadow-lift); }
-    @media (hover: hover) and (pointer: fine) { .ticket:hover { translate: 0 -3px; box-shadow: var(--shadow-lift); } }
+    /* El más pedido: boleto de noche, más grande, con halo de acento, sello que gira y listón. */
+    .ticket.featured {
+      background: radial-gradient(120% 140% at 0% 0%, #1c2742, var(--color-night) 70%);
+      color: var(--color-on-night);
+      scale: 1.025;
+      margin-block: 18px;
+      box-shadow: 0 0 0 1px rgb(226 167 160 / 55%), 0 30px 70px -28px rgb(164 81 79 / 70%), var(--shadow-lift);
+    }
+    .ticket.featured::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; background: conic-gradient(from var(--spin, 0deg), transparent 0 70%, var(--color-accent-soft) 85%, transparent 100%); mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: halo 5s linear infinite; pointer-events: none; }
+    @property --spin { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+    @keyframes halo { to { --spin: 360deg; } }
+    .ticket.featured .hours, .ticket.featured .summary, .ticket.featured .cur, .ticket.featured .from { color: var(--color-on-night-2); }
+    .ticket.featured .name { color: var(--color-accent-soft); }
+    .ticket.featured .dots { border-color: rgb(233 236 243 / 18%); }
+    .ticket.featured .includes app-icon { color: var(--color-accent-soft); }
+    .ticket.featured .amount { font-size: clamp(2.4rem, 4vw, 3.4rem); }
+    .value { margin-top: 10px; max-width: 18ch; text-align: center; font-size: 0.8rem; line-height: 1.4; color: var(--color-accent-soft); }
+    .seal { position: absolute; z-index: 3; left: 128px; top: -30px; width: 104px; height: 104px; display: grid; place-items: center; filter: drop-shadow(0 10px 18px rgb(10 16 34 / 45%)); }
+    .seal > svg:first-child { position: absolute; inset: 0; animation: seal-spin 16s linear infinite; }
+    .seal .bg { fill: var(--color-accent); }
+    .seal text { font-family: var(--font-label); font-size: 10.5px; font-weight: 600; letter-spacing: 1.6px; fill: #fff; }
+    .seal .st { position: relative; width: 26px; height: 26px; fill: #fff; animation: seal-twinkle 2.6s var(--ease-in-out) infinite; }
+    @keyframes seal-spin { to { rotate: 360deg; } }
+    @keyframes seal-twinkle { 50% { scale: 1.25; rotate: 45deg; } }
+    .ribbon { position: absolute; z-index: 2; top: 22px; left: -8px; padding: 7px 14px 7px 16px; background: var(--color-accent); color: #fff; font-size: 0.6rem; box-shadow: 0 6px 14px -6px rgb(0 0 0 / 50%); }
+    .ribbon::after { content: ''; position: absolute; left: 0; top: 100%; border: 4px solid transparent; border-top-color: #6e3231; border-right-color: #6e3231; }
+    @media (hover: hover) and (pointer: fine) { .ticket:not(.featured):hover { translate: 0 -3px; box-shadow: var(--shadow-lift); } .ticket.featured:hover { translate: 0 -4px; } }
     .pic { position: relative; margin: 12px; border-radius: 10px; overflow: hidden; }
     .pic img { width: 100%; height: 100%; min-height: 200px; object-fit: cover; }
-    .badge { position: absolute; left: 10px; top: 10px; padding: 6px 10px; border-radius: var(--radius-pill); background: rgb(23 22 20 / 80%); color: var(--color-paper); font-size: 0.58rem; }
+
     .info { padding: 26px 24px 22px; }
     .hours { font-family: var(--font-label); font-size: 0.8rem; letter-spacing: 0.08em; color: var(--color-muted); }
     .name { font-family: var(--font-display); font-style: italic; font-size: clamp(2rem, 3.6vw, 2.8rem); margin-top: 6px; }
@@ -185,17 +221,17 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
     .includes ul { overflow: hidden; display: grid; gap: 8px; }
     .ticket.open .includes ul { padding-top: 16px; }
     .includes li { display: flex; gap: 10px; align-items: baseline; font-size: 0.95rem; }
-    .includes app-icon { color: var(--color-champagne); translate: 0 2px; }
+    .includes app-icon { color: var(--color-accent); translate: 0 2px; }
     .price { position: relative; display: grid; align-content: center; justify-items: center; padding: 20px; }
     .dots { position: absolute; left: 0; top: 18%; bottom: 18%; border-left: 3px dotted var(--color-paper-3); }
     .from { font-size: 2rem; color: var(--color-muted); line-height: 0.8; }
-    .amount { font-family: var(--font-display); font-size: clamp(2rem, 3.4vw, 2.9rem); line-height: 1.1; font-variation-settings: 'opsz' 96; }
+    .amount { font-family: var(--font-display); font-size: clamp(2rem, 3.4vw, 2.9rem); line-height: 1.1; }
     .cur { color: var(--color-muted); }
 
     .extras-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
     .title-2 { font-size: var(--text-2xl); margin: 14px 0; }
-    .title-2 em { color: var(--color-champagne); }
-    .on-night .title-2 em { color: var(--color-champagne-soft); }
+    .title-2 em { color: var(--color-accent); }
+    .on-night .title-2 em { color: var(--color-accent-soft); }
     .menu { padding: 50px clamp(22px, 4vw, 44px) 30px; rotate: 0.6deg; }
     .menu .clip { position: absolute; left: 50%; top: -44px; translate: -50% 0; --clip-w: 60px; }
     .menu ul { display: grid; gap: 4px; }
@@ -209,7 +245,7 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
     .steps::before { content: ''; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 1px; background: var(--color-line-night); }
     .step { position: relative; padding-bottom: 40px; max-width: 640px; }
     .dot { position: absolute; left: -34px; top: 4px; width: 15px; height: 15px; border-radius: 50%; background: var(--color-on-night); box-shadow: 0 0 0 5px var(--color-night); }
-    .step .n { color: var(--color-champagne-soft); }
+    .step .n { color: var(--color-accent-soft); }
     .step-title { font-size: 1.9rem; font-style: italic; margin: 6px 0 8px; }
     .step-text { color: var(--color-on-night-2); }
 
@@ -234,6 +270,9 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
       .price .from { font-size: 1.6rem; }
       .info { padding-bottom: 14px; }
       .extras-grid, .faq-grid { grid-template-columns: 1fr; }
+      .ticket.featured { scale: 1; }
+      .seal { left: auto; right: 10px; top: -30px; width: 88px; height: 88px; }
+      .value { grid-column: 1 / -1; text-align: left; max-width: none; margin-top: 0; }
     }
   `,
 })

@@ -18,8 +18,8 @@ import { photo, photoSrc } from '../core/media';
         <h1 class="title">Esta foto <em>se veló</em></h1>
         <p class="lead">La página que buscas no existe o cambió de lugar. Pasa, la mesa sigue llena de fotos.</p>
         <div class="ctas">
-          <a routerLink="/" class="btn btn-ink">Volver al inicio</a>
-          <a routerLink="/galeria" class="btn btn-line">Ir a la galería</a>
+          <a routerLink="/" class="btn btn-ink"><span class="btn-t">Volver al inicio</span></a>
+          <a routerLink="/galeria" class="btn btn-line"><span class="btn-t">Ir a la galería</span></a>
         </div>
       </div>
     </section>
@@ -31,7 +31,7 @@ import { photo, photoSrc } from '../core/media';
     .pol figcaption { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 2rem; color: #333; }
     .copy { display: grid; gap: 18px; }
     .title { font-size: var(--text-3xl); }
-    .title em { color: var(--color-champagne); }
+    .title em { color: var(--color-accent); }
     .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
     @media (max-width: 760px) { .nf { grid-template-columns: 1fr; justify-items: center; text-align: center; } .ctas { justify-content: center; } }
   `,

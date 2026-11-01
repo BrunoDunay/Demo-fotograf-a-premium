@@ -4,7 +4,7 @@
       <p class="label kicker">Emilio Astor · Bodas y eventos sociales · Aguascalientes</p>
       <h1 id="hero-title" class="title">
         Noches que brillan
-        <span class="script accent">una sola vez</span>
+        <em class="accent">una sola vez</em>
       </h1>
       <p class="lead intro-text">
         Fotografío bodas, XV años y celebraciones como si fuera un invitado más. Esta es mi mesa: revuelve las
@@ -13,9 +13,9 @@
       <div class="ctas">
         <a routerLink="/galeria" class="btn btn-ink">
           <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
-          Recorrer la galería
+          <span class="btn-t">Recorrer la galería</span>
         </a>
-        <a routerLink="/contacto" fragment="fechas" class="btn btn-line">Ver fechas libres</a>
+        <a routerLink="/contacto" fragment="fechas" class="btn btn-line"><span class="btn-t">Ver fechas libres</span></a>
       </div>
     </div>
 
@@ -62,7 +62,7 @@
         }
         <button type="button" class="btn btn-ink" (click)="dropMore()">
           <svg class="star" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
-          Soltar más fotos
+          <span class="btn-t">Soltar más fotos</span>
         </button>
       </div>
     }
@@ -103,8 +103,8 @@
       <div class="zoom-info">
         <p class="alt">{{ z.photo.alt }}.</p>
         <div class="zoom-actions">
-          <button type="button" class="btn btn-line" (click)="closeZoom()">Regresar a la mesa</button>
-          <a routerLink="/galeria" class="btn btn-ink" (click)="closeZoom()">Ver la galería</a>
+          <button type="button" class="btn btn-line" (click)="closeZoom()"><span class="btn-t">Regresar a la mesa</span></button>
+          <a routerLink="/galeria" class="btn btn-ink" (click)="closeZoom()"><span class="btn-t">Ver la galería</span></a>
         </div>
       </div>
     </div>

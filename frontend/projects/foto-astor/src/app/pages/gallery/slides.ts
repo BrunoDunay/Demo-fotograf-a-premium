@@ -24,14 +24,14 @@ export interface Slide {
 
 export type Images = Map<string, HTMLImageElement>;
 
-const NIGHT = '#0b0b0c';
-const PAPER = '#ece8e1';
-const INK = '#161514';
+const NIGHT = '#070b16';
+const PAPER = '#e9ecf3';
+const INK = '#141b2d';
 const SOFT = 'rgba(236,232,225,0.62)';
-const CHAMPAGNE = '#cdb592';
+const CHAMPAGNE = '#e2a7a0';
 
-const F_DISPLAY = '"Bodoni Moda Variable", "Bodoni 72", Didot, Georgia, serif';
-const F_LABEL = '"Oswald Variable", "Arial Narrow", sans-serif';
+const F_DISPLAY = '"Instrument Serif", Georgia, serif';
+const F_LABEL = '"Instrument Sans Variable", Arial, sans-serif';
 const F_SCRIPT = '"Mrs Saint Delafield", cursive';
 const F_BODY = '"Hanken Grotesk Variable", system-ui, sans-serif';
 
@@ -280,8 +280,8 @@ export function compose(slide: Slide, canvas: HTMLCanvasElement, imgs: Images) {
         ctx.fillText(l, W / 2, y);
         y += lh;
       }
-      label(ctx, slide.label ?? '', W / 2, y + lh * 0.3, Math.max(10, m * 0.03), dark ? CHAMPAGNE : '#8f7258', 'center');
-      ctx.fillStyle = dark ? CHAMPAGNE : '#8f7258';
+      label(ctx, slide.label ?? '', W / 2, y + lh * 0.3, Math.max(10, m * 0.03), dark ? CHAMPAGNE : '#a4514f', 'center');
+      ctx.fillStyle = dark ? CHAMPAGNE : '#a4514f';
       star(ctx, W / 2, H * 0.14, m * 0.035);
       ctx.textAlign = 'left';
       break;

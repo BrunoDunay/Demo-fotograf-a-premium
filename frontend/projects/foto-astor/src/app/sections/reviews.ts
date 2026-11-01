@@ -28,7 +28,7 @@ const EVENTS = ['Boda', 'XV años', 'Bautizo', 'Primera comunión', 'Graduación
         <header class="head">
           <p class="label kicker" data-reveal>Reseñas</p>
           <h2 id="reviews-title" class="title" data-reveal>
-            Lo que dicen <span class="script">quienes ya brillaron</span>
+            Lo que dicen <em>quienes ya brillaron</em>
           </h2>
           <p class="score" data-reveal>
             <span class="stars" aria-hidden="true">@for (s of [1, 2, 3, 4, 5]; track s) {<app-icon name="star" [size]="14" />}</span>
@@ -77,7 +77,7 @@ const EVENTS = ['Boda', 'XV años', 'Bautizo', 'Primera comunión', 'Graduación
               <div class="send-row">
                 <span class="chars label">{{ text.length }}/280</span>
                 <button type="submit" class="btn btn-ink" [disabled]="!text.trim() || !name.trim()">
-                  Publicar <app-icon name="send" [size]="16" />
+                  <span class="btn-t">Publicar</span> <app-icon name="send" [size]="16" />
                 </button>
               </div>
               @if (sent()) {
@@ -139,10 +139,10 @@ const EVENTS = ['Boda', 'XV años', 'Bautizo', 'Primera comunión', 'Graduación
   styles: `
     .head { display: grid; justify-items: center; gap: 16px; text-align: center; margin-bottom: 64px; }
     .title { font-size: var(--text-2xl); display: grid; justify-items: center; }
-    .title .script { font-size: 1.15em; color: var(--color-champagne); margin-top: 0.05em; }
+    .title em { color: var(--color-accent); }
     .score { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; color: var(--color-muted); font-size: 0.92rem; }
     .score b { color: var(--color-ink); font-weight: 600; }
-    .stars { display: inline-flex; gap: 2px; color: var(--color-champagne); }
+    .stars { display: inline-flex; gap: 2px; color: var(--color-accent); }
 
     .layout { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
 
@@ -153,11 +153,11 @@ const EVENTS = ['Boda', 'XV años', 'Bautizo', 'Primera comunión', 'Graduación
       display: grid;
       gap: 16px;
       padding: 54px clamp(20px, 3vw, 34px) 26px;
-      background: #f8f6f1;
+      background: #f7f8fa;
       border-radius: 22px;
       box-shadow: var(--shadow-lift);
     }
-    .seal { position: absolute; top: -34px; left: 50%; translate: -50% 0; display: grid; place-items: center; width: 68px; height: 68px; border-radius: 50%; background: #8f7258; color: #fbf6ee; box-shadow: 0 10px 20px -8px rgb(60 40 20 / 50%); }
+    .seal { position: absolute; top: -34px; left: 50%; translate: -50% 0; display: grid; place-items: center; width: 68px; height: 68px; border-radius: 50%; background: #a4514f; color: #fbf6ee; box-shadow: 0 10px 20px -8px rgb(60 40 20 / 50%); }
     .ask { text-align: center; font-size: 0.86rem; letter-spacing: 0.24em; color: var(--color-ink); }
     textarea {
       width: 100%;
@@ -166,44 +166,44 @@ const EVENTS = ['Boda', 'XV años', 'Bautizo', 'Primera comunión', 'Graduación
       border: 0;
       border-radius: 14px;
       resize: vertical;
-      background: #e7dfd3;
+      background: #e6e2e4;
       color: var(--color-ink);
       text-align: center;
       line-height: 1.5;
       transition: box-shadow 200ms ease;
     }
-    textarea::placeholder { color: rgb(70 60 50 / 55%); }
-    textarea:focus { outline: none; box-shadow: inset 0 0 0 1.5px #8f7258; }
+    textarea::placeholder { color: rgb(20 27 45 / 50%); }
+    textarea:focus { outline: none; box-shadow: inset 0 0 0 1.5px #a4514f; }
     .rate { display: flex; justify-content: center; gap: 4px; }
     .rate button { display: grid; place-items: center; width: 40px; height: 40px; color: var(--color-paper-3); transition: color 200ms ease, scale 200ms var(--ease-spring); }
-    .rate button.on { color: var(--color-champagne); }
+    .rate button.on { color: var(--color-accent); }
     .rate button:active { scale: 0.85; }
     .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .fields label { display: grid; gap: 6px; }
     .fields .label { color: var(--color-muted); font-size: 0.62rem; }
     input, select { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid var(--color-line-2); border-radius: 12px; background: transparent; }
-    input:focus, select:focus { outline: none; border-color: #8f7258; }
+    input:focus, select:focus { outline: none; border-color: #a4514f; }
     .send-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .chars { color: var(--color-muted); }
     .send-row .btn { min-height: 46px; }
     .send-row .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .note { font-size: 0.86rem; color: var(--color-muted); text-align: center; animation: in 500ms var(--ease-out); }
     @keyframes in { from { opacity: 0; translate: 0 6px; } }
-    .sign { margin-top: 26px; text-align: center; font-size: 2.6rem; color: #8f7258; }
-    .deco { position: absolute; right: 0; bottom: 10px; --size: 64px; opacity: 0.35; color: #8f7258; }
+    .sign { margin-top: 26px; text-align: center; font-size: 2.6rem; color: #a4514f; }
+    .deco { position: absolute; right: 0; bottom: 10px; --size: 64px; opacity: 0.35; color: #a4514f; }
 
     .feed { display: grid; gap: 4px; }
     .item { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--color-line); animation: in 600ms var(--ease-out) both; }
-    .item.pending { background: linear-gradient(90deg, rgb(169 139 102 / 10%), transparent); border-radius: 12px; padding-inline: 10px; }
-    .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--color-paper), 0 0 0 3.5px var(--color-champagne-soft); }
+    .item.pending { background: linear-gradient(90deg, rgb(164 81 79 / 10%), transparent); border-radius: 12px; padding-inline: 10px; }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--color-paper), 0 0 0 3.5px var(--color-accent-soft); }
     .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 0.92rem; }
     .meta b { font-weight: 600; }
     .event { font-size: 0.82rem; color: var(--color-muted); }
-    .stars-row { display: flex; gap: 1px; margin-top: 3px; color: var(--color-champagne); }
+    .stars-row { display: flex; gap: 1px; margin-top: 3px; color: var(--color-accent); }
     .stars-row .off { color: var(--color-paper-3); }
     .text { margin-top: 6px; font-size: 0.98rem; line-height: 1.55; color: var(--color-ink-2); }
     .actions { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 0.78rem; color: var(--color-muted); font-weight: 500; }
-    .tag { color: #8f7258; }
+    .tag { color: #a4514f; }
     .reply { display: grid; grid-template-columns: 30px 1fr; gap: 10px; margin-top: 14px; padding-left: 4px; }
     .reply .me { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color-ink); color: var(--color-paper); font-family: var(--font-display); font-size: 0.9rem; box-shadow: none; }
     .reply .text { margin-top: 2px; font-size: 0.92rem; }

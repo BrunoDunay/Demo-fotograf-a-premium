@@ -6,7 +6,7 @@ Leer primero `docs/astor.md` (ficha completa). Repositorio: https://github.com/B
 
 - `frontend/`: workspace de Angular 22 con una sola app, `projects/foto-astor` (puerto 4310).
   - `src/app/core/`: `content.ts` (textos, paquetes, reseñas, equipo), `media.ts` + `media.data.ts` (generado), `motion.ts` (GSAP, Lenis, bloqueo de scroll), `booking.ts` (fecha y paquete elegidos, disponibilidad ficticia), `seo.ts`.
-  - `src/app/sections/`: mesa de fotos (`photo-pile.*`), rollo de video (`film-reel.ts`), reseñas, tarjeta 3D (`business-card.ts`), calendario (`availability.ts`), formulario de WhatsApp, etc.
+  - `src/app/sections/`: mesa de fotos (`photo-pile.*`), rollo de video (`film-reel.ts`), reseñas, tarjeta 3D (`business-card.ts`, Three.js), cámara colgante (`hanging-camera.ts`, Three.js + Verlet), calendario (`availability.ts`), formulario de WhatsApp, "save the date" (`dates-teaser.ts`), etc.
   - `src/app/pages/gallery/`: galería en Three.js. `engine.ts` (sala, recorrido, luces, siluetas, piso reflejante, postproceso), `screen.ts` (pantalla con shader de transiciones), `slides.ts` (dibujo de cada diapositiva en canvas 2D), `programs.ts` (qué pasa cada pantalla y con qué transición).
   - `scripts/media.mjs`: fotos y videos de Pexels → WebP / MP4 y `media.data.ts`. `scripts/brand-assets.mjs`: favicon, ícono de Apple y `og.jpg`. `scripts/recortes/`: PNG sin fondo (cámara, lente, dron, siluetas).
 - `referencias/`: material de Bruno (solo local, no se sube).
@@ -19,7 +19,9 @@ Leer primero `docs/astor.md` (ficha completa). Repositorio: https://github.com/B
 - `html { overflow-x: clip }`: nada se desplaza de lado (tarjetas giradas y decorados se asoman).
 - La mesa de fotos ignora el clic fantasma tras un toque (500 ms) para no cerrar la foto recién abierta.
 - El calendario y los boletos de sábados dependen de la fecha de hoy: el calendario se dibuja solo en el navegador.
-- Galería: el reflejo del piso es un `Reflector` con shader propio sumado (aditivo) sobre el piso; las pantallas usan `toneMapped: false` y el bloom con umbral 0.8. Para cambiar el recorrido, editar `KEYS` en `engine.ts` (`pk` limita cuánto se aleja la cámara en vertical).
+- Galería: el reflejo del piso es un `Reflector` con shader propio sumado (aditivo) sobre el piso; las pantallas usan `toneMapped: false`. Para cambiar el recorrido, editar `STOPS` en `engine.ts` (`pk` limita cuánto se aleja la cámara en vertical; `cut` fuerza un fundido) y ajustar `STOPS`/`ROOM_STOP` en `gallery.ts`. Nada de transiciones pixeladas ni grano: a Bruno no le gustan.
+- El texto de los botones va en `<span class="btn-t">` en la plantilla (no envolverlo con JS: rompe la hidratación).
+- Paleta fría a propósito (porcelana, medianoche, palo de rosa) para no parecerse a Armando Ovalle Wedding Studio.
 - Capturas de revisión: puppeteer-core con el Chrome instalado; para la galería en modo sin pantalla agregar `--enable-unsafe-swiftshader`.
 
 ## Estado (31 oct 2026)

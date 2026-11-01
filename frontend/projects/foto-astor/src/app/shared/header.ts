@@ -31,13 +31,22 @@ const LINKS = [
   template: `
     <header class="bar">
       <a routerLink="/" class="brand" aria-label="Astor, ir al inicio" (click)="open.set(false)"><app-logo [compact]="true" /></a>
-      <nav class="links" aria-label="Principal">
+      <nav class="links" aria-label="Principal" (pointerleave)="pill.set(null)">
+        <span class="pill" aria-hidden="true" [class.on]="pill()" [style.--x.px]="pill()?.x" [style.--w.px]="pill()?.w"></span>
         @for (l of links; track l.path) {
-          <a [routerLink]="l.path" routerLinkActive="active">{{ l.label }}</a>
+          <a [routerLink]="l.path" routerLinkActive="active" [attr.aria-label]="l.label" (pointerenter)="aim($event)">
+            <svg class="tw" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
+            <span class="roll" aria-hidden="true">
+              @for (ch of letters(l.label); track $index) {
+                <span class="ch" [style.--i]="$index">{{ ch }}</span>
+              }
+            </span>
+          </a>
         }
       </nav>
-      <a routerLink="/contacto" fragment="fechas" class="cta btn btn-ink">
-        <span>Aparta tu fecha</span>
+      <a routerLink="/contacto" fragment="fechas" class="cta btn btn-accent">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="btn-t">Aparta tu fecha</span>
       </a>
       <button type="button" class="menu-btn" [attr.aria-expanded]="open()" aria-controls="menu" (click)="toggle()">
         <span class="lines" aria-hidden="true"><i></i><i></i></span>
@@ -70,7 +79,7 @@ const LINKS = [
     }
   `,
   styles: `
-    :host { position: fixed; inset: 0 0 auto; z-index: var(--z-header); color: var(--color-ink); transition: translate 420ms var(--ease-out), color 400ms ease; }
+    :host { position: fixed; inset: 0 0 auto; z-index: var(--z-header); view-transition-name: site-header; color: var(--color-ink); transition: translate 420ms var(--ease-out), color 400ms ease; }
     :host(.hidden) { translate: 0 -110%; }
     .bar {
       position: relative;
@@ -82,30 +91,58 @@ const LINKS = [
       padding-inline: var(--gutter);
       transition: background-color 400ms ease, box-shadow 400ms ease, backdrop-filter 400ms ease;
     }
-    :host(.solid) .bar { background: rgb(239 236 230 / 82%); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); box-shadow: 0 1px 0 var(--color-line); }
+    :host(.solid) .bar { background: rgb(233 235 239 / 82%); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); box-shadow: 0 1px 0 var(--color-line); }
     :host(.night) { color: var(--color-on-night); }
-    :host(.night.solid) .bar { background: rgb(10 10 11 / 72%); box-shadow: 0 1px 0 var(--color-line-night); }
+    :host(.night.solid) .bar { background: rgb(7 11 22 / 72%); box-shadow: 0 1px 0 var(--color-line-night); }
     .brand { display: inline-flex; font-size: 15px; margin-right: auto; position: relative; z-index: 3; }
-    .links { display: flex; gap: 30px; }
+    .links { position: relative; display: flex; gap: 6px; }
     .links a {
       position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       font-family: var(--font-label);
       font-size: 0.74rem;
-      letter-spacing: 0.2em;
+      font-weight: 520;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      padding-block: 8px;
-      opacity: 0.78;
-      transition: opacity 200ms ease;
+      padding: 10px 14px;
+      opacity: 0.8;
+      transition: opacity 250ms ease, color 350ms ease;
     }
-    .links a::after { content: ''; position: absolute; left: 0; right: 0; bottom: 2px; height: 1px; background: currentColor; scale: 0 1; transform-origin: right; transition: scale 500ms var(--ease-out); }
+    /* Pastilla que se desliza con resorte hasta el enlace bajo el cursor. */
+    .pill {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      height: 36px;
+      width: var(--w, 60px);
+      translate: var(--x, 0) -50%;
+      border-radius: var(--radius-pill);
+      background: currentColor;
+      opacity: 0;
+      scale: 0.7 0.5;
+      transition: translate 520ms var(--ease-spring), width 520ms var(--ease-spring), opacity 250ms ease, scale 420ms var(--ease-spring);
+      pointer-events: none;
+    }
+    .pill.on { opacity: 0.08; scale: 1; }
+    /* Las letras ruedan una por una (sale la de arriba y entra la misma desde abajo). */
+    .roll { display: inline-flex; overflow: hidden; line-height: 1.25; }
+    .ch { display: inline-block; white-space: pre; text-shadow: 0 1.3em currentColor; transition: translate 560ms var(--ease-out) calc(var(--i) * 22ms); }
+    .tw { width: 9px; height: 9px; fill: var(--color-accent); margin-left: -15px; opacity: 0; scale: 0; rotate: -90deg; transition: scale 500ms var(--ease-spring), rotate 700ms var(--ease-out), opacity 200ms ease, margin 500ms var(--ease-out); }
+    :host(.night) .tw { fill: var(--color-accent-soft); }
     .links a.active { opacity: 1; }
-    .links a.active::after { scale: 1 1; }
+    .links a.active .tw { opacity: 1; scale: 1; rotate: 0deg; margin-left: 0; }
     @media (hover: hover) and (pointer: fine) {
       .links a:hover { opacity: 1; }
-      .links a:hover::after { scale: 1 1; transform-origin: left; }
+      .links a:hover .ch { translate: 0 -1.3em; }
+      .links a:hover .tw { opacity: 1; scale: 1; rotate: 0deg; margin-left: 0; }
     }
-    .cta { min-height: 44px; padding: 0 20px; font-size: 0.7rem; }
-    :host(.night) .cta { background: var(--color-on-night); color: var(--color-night); }
+    .cta { min-height: 46px; padding: 0 22px 0 18px; font-size: 0.7rem; }
+    .cta .dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: #fff; flex: none; }
+    .cta .dot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #fff; animation: dot-ping 2.2s var(--ease-out) infinite; }
+    @keyframes dot-ping { 0% { scale: 1; opacity: 0.7; } 70%, 100% { scale: 3.2; opacity: 0; } }
     .menu-btn { display: none; position: relative; z-index: 3; align-items: center; gap: 10px; min-height: 44px; font-family: var(--font-label); font-size: 0.74rem; letter-spacing: 0.2em; text-transform: uppercase; }
     .menu-btn:active { scale: 0.95; }
     .lines { position: relative; width: 22px; height: 10px; }
@@ -165,6 +202,8 @@ export class Header {
   protected readonly solid = signal(false);
   protected readonly hidden = signal(false);
   protected readonly hover = signal(0);
+  protected readonly pill = signal<{ x: number; w: number } | null>(null);
+  protected readonly letters = (t: string) => [...t];
   private readonly motion = inject(Motion);
 
   constructor() {
@@ -195,6 +234,11 @@ export class Header {
         removeEventListener('keydown', onKey);
       });
     });
+  }
+
+  protected aim(e: PointerEvent) {
+    const a = e.currentTarget as HTMLElement;
+    this.pill.set({ x: a.offsetLeft, w: a.offsetWidth });
   }
 
   protected toggle() {

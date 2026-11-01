@@ -7,9 +7,9 @@ La marca, las personas, las reseñas, los datos de contacto y los precios son in
 Lo más destacado:
 
 - **Mesa de fotos** en la portada: arrastrar, lanzar, ver de cerca en 3D y soltar más fotos al azar.
-- **Galería en 3D** (Three.js) que se recorre con el scroll: cinco salas con pantallas LED, transiciones como las de una galería real, siluetas mirando y piso que refleja.
+- **Galería en 3D** (Three.js) que se recorre con el scroll como cambios de escena: cinco salas con pantallas LED, transiciones suaves, siluetas mirando, logo en muros y piso, y piso pulido que refleja.
 - **Rollo de película** con videos, en blanco y negro o a color.
-- **Cámara colgante** que se balancea al tocarla, **tarjeta de presentación** que se gira libremente, calendario de fechas, reseñas tipo Instagram y formulario que abre WhatsApp.
+- **Cámara en 3D colgando de su correa** (con física) y **tarjeta de presentación en 3D** en cuatro colores, calendario de pared, "save the date", reseñas tipo Instagram y formulario que abre WhatsApp.
 
 La ficha de diseño completa (concepto, paleta, tipografías, secciones e interacciones) está en `docs/astor.md`.
 

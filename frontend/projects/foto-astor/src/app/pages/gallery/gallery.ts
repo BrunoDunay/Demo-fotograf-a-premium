@@ -24,8 +24,8 @@ const ROOMS = [
   { n: 'Sala V', title: 'Panorama', note: 'XV años, celebraciones y lo que sigue' },
 ];
 /** Primera estación de cada sala dentro del recorrido (índices de las paradas). */
-const ROOM_STOP = [0, 2, 4, 6, 8];
-const STOPS = 11;
+const ROOM_STOP = [0, 2, 4, 7, 9];
+const STOPS = 12;
 
 /**
  * Galería: una exposición en 3D (Three.js) que se recorre con el scroll. Cada sala tiene pantallas con su propia
@@ -83,8 +83,8 @@ const STOPS = 11;
           <div class="end">
             <p class="script">¿Tu historia sigue?</p>
             <div class="end-actions">
-              <a routerLink="/contacto" fragment="fechas" class="btn btn-light">Aparta tu fecha</a>
-              <button type="button" class="btn btn-line-light" (click)="restart()">Volver a la entrada</button>
+              <a routerLink="/contacto" fragment="fechas" class="btn btn-light"><span class="btn-t">Aparta tu fecha</span></a>
+              <button type="button" class="btn btn-line-light" (click)="restart()"><span class="btn-t">Volver a la entrada</span></button>
             </div>
           </div>
         }
@@ -125,7 +125,7 @@ const STOPS = 11;
     .room.show { opacity: 1; }
     .room-item { position: absolute; left: 0; bottom: 0; width: max-content; max-width: 70vw; opacity: 0; translate: 0 14px; transition: opacity 500ms ease, translate 700ms var(--ease-out); }
     .room-item.on { position: relative; opacity: 1; translate: 0 0; transition-delay: 200ms; }
-    .room-item .n { color: var(--color-champagne-soft); }
+    .room-item .n { color: var(--color-accent-soft); }
     .room-item .t { font-family: var(--font-display); font-style: italic; font-size: clamp(2.2rem, 5vw, 4.2rem); line-height: 1; margin-top: 6px; text-shadow: 0 2px 30px rgb(0 0 0 / 60%); }
     .room-item .note { margin-top: 8px; font-size: 0.92rem; color: var(--color-on-night-2); }
 
@@ -148,7 +148,7 @@ const STOPS = 11;
 
     .end { position: absolute; left: 50%; top: 12%; z-index: 3; display: grid; justify-items: center; gap: 18px; translate: -50% 0; text-align: center; animation: end-in 900ms var(--ease-out) both; }
     @keyframes end-in { from { opacity: 0; translate: -50% 16px; } }
-    .end .script { font-size: clamp(2.6rem, 6vw, 4.4rem); color: var(--color-champagne-soft); text-shadow: 0 2px 30px rgb(0 0 0 / 70%); }
+    .end .script { font-size: clamp(2.6rem, 6vw, 4.4rem); color: var(--color-accent-soft); text-shadow: 0 2px 30px rgb(0 0 0 / 70%); }
     .end-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 
     .cursor { position: fixed; left: 0; top: 0; z-index: 4; padding: 8px 14px; border-radius: var(--radius-pill); background: var(--color-on-night); color: var(--color-night); pointer-events: none; opacity: 0; scale: 0.8; transition: opacity 200ms ease, scale 300ms var(--ease-out); font-size: 0.62rem; }
@@ -156,7 +156,7 @@ const STOPS = 11;
 
     .fallback { position: absolute; inset: 0; overflow-y: auto; padding: 120px var(--gutter) 60px; }
     .fb-title { font-size: var(--text-xl); margin: 14px 0 28px; max-width: 24em; }
-    .fb-title em { color: var(--color-champagne-soft); }
+    .fb-title em { color: var(--color-accent-soft); }
     .fb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
     .fb-grid button { display: block; width: 100%; }
     .fb-grid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
@@ -281,7 +281,7 @@ export default class Gallery {
     const walk = this.host.querySelector<HTMLElement>('.walk')!;
     const top = walk.getBoundingClientRect().top + scrollY;
     const span = walk.offsetHeight - innerHeight;
-    // A mitad de la pausa de la primera parada de la sala.
+    // Justo en el primer encuadre de la sala.
     const q = ROOM_STOP[i] / (STOPS - 1);
     this.motion.scrollTo(top + span * q, false, 0);
   }

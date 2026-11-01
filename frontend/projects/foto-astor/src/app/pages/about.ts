@@ -7,6 +7,7 @@ import { BinderClip } from '../shared/binder-clip';
 import { Celestial } from '../shared/celestial';
 import { Icon } from '../shared/icon';
 import { CountUp, Reveal } from '../shared/reveal';
+import { Stick } from '../shared/stick';
 
 const COLS = 4;
 const ROWS = 5;
@@ -18,7 +19,7 @@ const ROWS = 5;
 @Component({
   selector: 'app-about',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Reveal, CountUp, BinderClip, Celestial, Icon],
+  imports: [RouterLink, Reveal, CountUp, BinderClip, Celestial, Icon, Stick],
   template: `
     <section class="hero" (pointermove)="parallax($event)" (pointerleave)="parallax(null)">
       <div class="container hero-grid">
@@ -30,8 +31,8 @@ const ROWS = 5;
             hablar poco y estar donde pasan las cosas, sin que nadie tenga que posar para mí.
           </p>
           <div class="ctas">
-            <a routerLink="/equipo" class="btn btn-ink">Ver mi equipo</a>
-            <a routerLink="/contacto" class="btn btn-line">Escríbeme</a>
+            <a routerLink="/equipo" class="btn btn-ink"><span class="btn-t">Ver mi equipo</span></a>
+            <a routerLink="/contacto" class="btn btn-line"><span class="btn-t">Escríbeme</span></a>
           </div>
         </div>
 
@@ -52,7 +53,7 @@ const ROWS = 5;
             }
           </div>
           @for (n of notes; track n.text) {
-            <span class="note" [style.left.%]="n.x" [style.top.%]="n.y" [style.--rot]="n.rot + 'deg'">{{ n.text }}</span>
+            <span class="note" appStick [style.left.%]="n.x" [style.top.%]="n.y" [style.--rot]="n.rot + 'deg'">{{ n.text }}</span>
           }
         </div>
       </div>
@@ -84,7 +85,7 @@ const ROWS = 5;
             <p class="body">Me importa que tus nietos reconozcan cómo se sentía, no solo cómo se veía.</p>
           </article>
 
-          <article class="sheet white" data-reveal style="--rot: 0.8deg">
+          <article class="sheet white has-photo" data-reveal style="--rot: 0.8deg">
             <app-binder-clip class="clip" />
             <h3 class="script st">Fuera de cámara</h3>
             <p class="label sub">Lo que hago cuando no hay boda</p>
@@ -93,8 +94,10 @@ const ROWS = 5;
               baño de mi casa. Viajo con una cámara de película y casi nunca la saco. Me gusta el café sin azúcar y las
               canciones de Juan Gabriel a las dos de la mañana.
             </p>
-            <figure class="polaroid" style="--rot: -6deg">
-              <img [src]="src('emilio-camara')" alt="Emilio tomando una foto con luz de ventana" loading="lazy" />
+            <figure class="polaroid" appStick style="--rot: -6deg">
+              <span class="tape" aria-hidden="true"></span>
+              <span class="peel label" aria-hidden="true">Despégala y muévela</span>
+              <img [src]="src('emilio-camara')" alt="Emilio tomando una foto con luz de ventana" loading="lazy" draggable="false" />
               <figcaption class="script">el estudio, 2024</figcaption>
             </figure>
           </article>
@@ -141,8 +144,8 @@ const ROWS = 5;
           <span class="board" aria-hidden="true"></span>
           <app-binder-clip class="clip big" />
           @for (p of collage; track p.name; let i = $index) {
-            <figure class="pol" [style.--rot]="p.rot + 'deg'" [style.left.%]="p.x" [style.top.%]="p.y" [style.--w]="p.w + '%'" [style.z-index]="i + 1">
-              <img [src]="src(p.name)" [alt]="alt(p.name)" loading="lazy" />
+            <figure class="pol" appStick [style.--rot]="p.rot + 'deg'" [style.left.%]="p.x" [style.top.%]="p.y" [style.--w]="p.w + '%'" [style.z-index]="i + 1">
+              <img [src]="src(p.name)" [alt]="alt(p.name)" loading="lazy" draggable="false" />
             </figure>
           }
         </div>
@@ -155,8 +158,8 @@ const ROWS = 5;
         <p class="script signature">Emilio</p>
         <p class="lead center">Si llegaste hasta aquí, ya nos caímos bien. Cuéntame de tu fecha.</p>
         <div class="ctas center">
-          <a routerLink="/contacto" fragment="fechas" class="btn btn-ink">Ver fechas disponibles</a>
-          <a routerLink="/paquetes" class="btn btn-line">Paquetes</a>
+          <a routerLink="/contacto" fragment="fechas" class="btn btn-ink"><span class="btn-t">Ver fechas disponibles</span></a>
+          <a routerLink="/paquetes" class="btn btn-line"><span class="btn-t">Paquetes</span></a>
         </div>
         <p class="label muted">{{ brand.instagram }} · {{ brand.email }}</p>
       </div>
@@ -167,7 +170,7 @@ const ROWS = 5;
     .hero-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 5vw, 80px); align-items: center; }
     .copy { display: grid; gap: 22px; align-content: center; }
     .title { font-size: var(--text-3xl); }
-    .title em { display: block; color: var(--color-champagne); }
+    .title em { display: block; color: var(--color-accent); }
     .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
     .ctas.center { justify-content: center; }
 
@@ -183,7 +186,7 @@ const ROWS = 5;
       background-size: 400% 500%;
       background-position: calc(var(--x) * 33.333%) calc(var(--y) * 25%);
       box-shadow: 0 1px 2px rgb(0 0 0 / 18%), 0 8px 16px -8px rgb(0 0 0 / 35%);
-      border: 2px solid #f5f2ec;
+      border: 2px solid #f4f5f8;
       transform: translate(calc(var(--dx) + var(--px, 0px) * var(--depth)), calc(var(--dy) + var(--py, 0px) * var(--depth))) rotate(var(--rot));
       transition: transform 900ms var(--ease-out);
     }
@@ -195,7 +198,7 @@ const ROWS = 5;
       width: 23%;
       aspect-ratio: 1;
       padding: 8px;
-      background: #eadcbf;
+      background: #f2d9d4;
       box-shadow: 0 2px 3px rgb(0 0 0 / 12%), 0 12px 18px -10px rgb(0 0 0 / 35%);
       font-family: 'Courier New', ui-monospace, monospace;
       font-size: clamp(0.72rem, 1.3vw, 1rem);
@@ -207,38 +210,43 @@ const ROWS = 5;
     .story { background: linear-gradient(var(--color-paper), var(--color-paper-2)); }
     .sheets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(48px, 6vw, 96px) clamp(28px, 4vw, 64px); align-items: start; }
     .sheet { position: relative; padding: clamp(48px, 6vw, 72px) clamp(26px, 4vw, 52px) clamp(30px, 4vw, 48px); rotate: var(--rot); box-shadow: var(--shadow-paper); }
-    .sheet.white { background: #fbfaf7; color: var(--color-ink); }
-    .sheet.ink { background: #2c2b29; color: #f1ede6; margin-top: 60px; }
+    .sheet.white { background: var(--color-card); color: var(--color-ink); }
+    .sheet.ink { background: #1a2133; color: #e9ecf3; margin-top: 60px; }
     .sheet.tilt { margin-top: 90px; }
-    .stacked { box-shadow: 14px 16px 0 0 #e6e2da, 14px 16px 22px 0 rgb(30 24 16 / 22%), var(--shadow-paper); }
-    .stacked-dark { box-shadow: -14px 16px 0 0 #2f2e2b, -14px 16px 22px 0 rgb(30 24 16 / 25%), var(--shadow-paper); }
+    .stacked { box-shadow: 14px 16px 0 0 #dfe3ea, 14px 16px 22px 0 rgb(10 16 34 / 22%), var(--shadow-paper); }
+    .stacked-dark { box-shadow: -14px 16px 0 0 #1d2538, -14px 16px 22px 0 rgb(10 16 34 / 25%), var(--shadow-paper); }
     .clip { position: absolute; left: 34px; top: -46px; z-index: 2; --clip-w: 58px; rotate: -8deg; }
     .st { font-size: clamp(2.6rem, 4.4vw, 3.6rem); margin-bottom: 14px; text-align: center; }
     .sub { margin-bottom: 18px; color: inherit; opacity: 0.75; }
     .body { font-family: var(--font-label); font-size: 0.98rem; font-weight: 400; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.6; }
     .body + .body { margin-top: 14px; }
-    .polaroid { position: absolute; right: -26px; bottom: -70px; width: 42%; padding: 7px 7px 34px; background: #fff; box-shadow: var(--shadow-lift); rotate: var(--rot); }
+    /* La instantánea queda en una esquina libre (abajo, fuera del texto) y se puede despegar y mover. */
+    .sheet.has-photo { padding-bottom: clamp(150px, 16vw, 210px); }
+    .polaroid .tape { left: 50%; top: -14px; width: 86px; translate: -50% 0; rotate: 4deg; }
+    .peel { position: absolute; left: 50%; top: -40px; translate: -50% 0; white-space: nowrap; font-size: 0.56rem; color: var(--color-muted); opacity: 0; transition: opacity 300ms ease; pointer-events: none; }
+    .polaroid:hover .peel { opacity: 1; }
+    .polaroid { position: absolute; right: -26px; bottom: -90px; width: 40%; padding: 7px 7px 34px; background: #fff; box-shadow: var(--shadow-lift); rotate: var(--rot); }
     .polaroid img { width: 100%; aspect-ratio: 1; object-fit: cover; }
     .polaroid figcaption { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 1.4rem; color: #333; }
 
     .numbers { padding-block: 72px; }
     .nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
     .num { display: grid; gap: 6px; justify-items: center; text-align: center; }
-    .big { font-family: var(--font-display); font-size: clamp(2.8rem, 6vw, 5rem); line-height: 1; font-variation-settings: 'opsz' 96; }
+    .big { font-family: var(--font-display); font-size: clamp(2.8rem, 6vw, 5rem); line-height: 1; }
     .num .label { color: var(--color-on-night-2); }
 
     .moves-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(40px, 6vw, 100px); align-items: center; }
     .title-2 { font-size: var(--text-2xl); }
-    .title-2 em { color: var(--color-champagne); }
+    .title-2 em { color: var(--color-accent); }
     .moves .copy { gap: 20px; justify-items: start; }
     .collage { position: relative; aspect-ratio: 1 / 1.1; }
     .board { position: absolute; inset: 8% 6% 4% 10%; background: #f7f5f0; box-shadow: var(--shadow-paper); rotate: -2deg; }
-    .board::after { content: ''; position: absolute; inset: 4% -5% -5% 6%; z-index: -1; background: #2c2b29; rotate: 3deg; }
+    .board::after { content: ''; position: absolute; inset: 4% -5% -5% 6%; z-index: -1; background: #1a2133; rotate: 3deg; }
     .clip.big { left: 12%; top: 0; --clip-w: 82px; }
-    .pol { position: absolute; width: var(--w); padding: 6px 6px 22px; background: #fff; box-shadow: var(--shadow-lift); rotate: var(--rot); transition: rotate 500ms var(--ease-out), scale 500ms var(--ease-out), translate 500ms var(--ease-out); }
+    .pol { position: absolute; width: var(--w); padding: 6px 6px 22px; background: #fff; box-shadow: var(--shadow-lift); rotate: var(--rot); transition: rotate 500ms var(--ease-out), scale 500ms var(--ease-out), box-shadow 300ms ease; }
     .pol img { width: 100%; aspect-ratio: 4 / 4.4; object-fit: cover; }
     @media (hover: hover) and (pointer: fine) {
-      .pol:hover { rotate: 0deg; scale: 1.06; translate: 0 -8px; z-index: 10 !important; }
+      .pol:hover { rotate: 0deg; scale: 1.06; z-index: 10 !important; }
     }
 
     .sign-wrap { position: relative; display: grid; justify-items: center; gap: 18px; text-align: center; }
@@ -253,7 +261,7 @@ const ROWS = 5;
       .mosaic { order: -1; max-width: 420px; }
       .sheets { grid-template-columns: 1fr; gap: 80px; }
       .sheet.tilt, .sheet.ink { margin-top: 0; }
-      .polaroid { right: -8px; bottom: -64px; width: 46%; }
+      .polaroid { right: -8px; bottom: -80px; width: 46%; }
       .nums { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 40px; }
     }
   `,

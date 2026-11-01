@@ -1,46 +1,32 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { GEAR } from '../core/content';
-import { cutout, cutoutSrc } from '../core/media';
+import { cutoutSrc } from '../core/media';
 import { prefersReducedMotion } from '../core/motion';
 import { Celestial } from '../shared/celestial';
 import { Icon } from '../shared/icon';
 import { Reveal } from '../shared/reveal';
+import { HangingCamera } from '../sections/hanging-camera';
 
 /**
- * Mi equipo: la cámara cuelga de su correa como un péndulo. El cursor (o el dedo) la empuja si la roza y se
- * balancea hasta detenerse; nada brusco. Abajo, las fichas técnicas del equipo y un dron que esquiva el cursor.
+ * Mi equipo: una cámara en 3D cuelga de su correa (con física); se agarra, se jala y se mece. Abajo, las fichas
+ * técnicas del equipo y la pantalla del dron con una toma aérea que se mueve con el cursor.
  */
 @Component({
   selector: 'app-gear',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Icon, Reveal, Celestial],
+  imports: [RouterLink, Icon, Reveal, Celestial, HangingCamera],
   template: `
     <section class="hero">
-      <div class="hang-zone" (pointermove)="push($event)" (pointerdown)="tap($event)">
-        <span class="rail" aria-hidden="true"></span>
-        <div class="pendulum">
-          <span class="strap left" aria-hidden="true"></span>
-          <span class="strap right" aria-hidden="true"></span>
-          <img
-            class="camera"
-            [src]="cameraSrc"
-            alt="Cámara Fujifilm X100VI colgando de su correa"
-            [attr.width]="camera.w"
-            [attr.height]="camera.h"
-            draggable="false"
-          />
-        </div>
-        <p class="shadow" aria-hidden="true"></p>
-      </div>
+      <app-hanging-camera class="hang-zone" />
       <div class="container copy">
         <p class="label kicker">Mi equipo</p>
-        <h1 class="title">Lo que cargo <span class="script">cada sábado</span></h1>
+        <h1 class="title">Lo que cargo <em>en cada evento</em></h1>
         <p class="lead">
           Cámaras, lentes, dron y luces, explicados sin rodeos. Y sí: esa cámara que cuelga es la que nunca se queda en
-          casa. Pásale el cursor encima (o el dedo) y verás.
+          casa. Agárrala y suéltala, o pásale el cursor encima.
         </p>
-        <p class="label hint"><app-icon name="drag" [size]="16" /> Empújala con cuidado</p>
+        <p class="label hint"><app-icon name="drag" [size]="16" /> Agárrala, jálala y suéltala</p>
       </div>
     </section>
 
@@ -70,8 +56,8 @@ import { Reveal } from '../shared/reveal';
                       <div><dt class="label">{{ s[0] }}</dt><dd>{{ s[1] }}</dd></div>
                     }
                   </dl>
-                  @if (g.image && g.image !== 'camara-colgante') {
-                    <img class="thumb" [class.drone]="g.image === 'dron'" [src]="cut(g.image)" [alt]="g.name" loading="lazy" />
+                  @if (g.image === 'lente') {
+                    <img class="thumb" [src]="cut(g.image)" [alt]="g.name" loading="lazy" />
                   }
                 </div>
               </div>
@@ -81,7 +67,7 @@ import { Reveal } from '../shared/reveal';
       </div>
     </section>
 
-    <section class="section sky on-night" aria-labelledby="sky-title" (pointermove)="dodge($event)" (pointerleave)="dodge(null)">
+    <section class="section sky on-night" aria-labelledby="sky-title">
       <app-celestial class="sky-deco twinkle" kind="stars" />
       <div class="container sky-grid">
         <div class="copy-2">
@@ -89,12 +75,23 @@ import { Reveal } from '../shared/reveal';
           <h2 id="sky-title" class="title-2" data-reveal>La hacienda entera, <em>en una sola foto</em></h2>
           <p class="lead" data-reveal>
             El dron sube solo cuando el lugar lo permite y lejos de los invitados. Para la fila de bengalas, la salida de
-            la iglesia y ese patio que nadie ve completo.
+            la iglesia y ese patio que nadie ve completo. Mueve el cursor sobre la pantalla para mover la cámara del dron.
           </p>
         </div>
-        <div class="drone-zone">
-          <img class="drone" [src]="droneSrc" alt="Dron DJI visto desde arriba" [style.translate]="droneOffset()" draggable="false" />
-          <span class="drone-shadow" aria-hidden="true" [style.translate]="droneShadow()"></span>
+        <div class="fpv" data-reveal="scale" (pointermove)="aim($event)" (pointerleave)="aim(null)">
+          <div class="feed" [style.translate]="gimbal().t" [style.scale]="gimbal().s">
+            <video [src]="aerial" [poster]="aerialPoster" muted loop playsinline autoplay preload="metadata" aria-label="Toma aérea de una pareja de novios en un jardín"></video>
+          </div>
+          <div class="hud" aria-hidden="true">
+            <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+            <span class="thirds"></span>
+            <span class="focus"></span>
+            <p class="top-l"><i class="rec"></i> REC 00:{{ clock() }}</p>
+            <p class="top-r">4K · 30 · ND16 <span class="bat"><i></i></span> 82%</p>
+            <p class="bot-l">ALT {{ hud().alt }} m<br />DIST {{ hud().dist }} m</p>
+            <p class="bot-r">GIMBAL {{ hud().tilt }}°<br />ISO 100 · 1/120</p>
+            <span class="horizon" [style.rotate]="hud().roll + 'deg'"></span>
+          </div>
         </div>
       </div>
     </section>
@@ -113,32 +110,24 @@ import { Reveal } from '../shared/reveal';
           }
         </ol>
         <div class="ctas" data-reveal>
-          <a routerLink="/paquetes" class="btn btn-ink">Ver paquetes</a>
-          <a routerLink="/sobre-mi" class="btn btn-line">Quién soy</a>
+          <a routerLink="/paquetes" class="btn btn-ink"><span class="btn-t">Ver paquetes</span></a>
+          <a routerLink="/sobre-mi" class="btn btn-line"><span class="btn-t">Quién soy</span></a>
         </div>
       </div>
     </section>
   `,
   styles: `
     .hero { position: relative; min-height: max(100svh, 760px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; overflow: hidden; padding-top: 70px; }
-    .hang-zone { position: relative; align-self: stretch; display: grid; justify-items: center; grid-column: 2; grid-row: 1; touch-action: pan-y; }
-    /* Riel corto de metal del que cuelga la correa. */
-    .rail { position: absolute; top: 34px; left: 50%; z-index: 2; width: min(340px, 72%); height: 10px; translate: -50% 0; border-radius: 5px; background: linear-gradient(#3a3a3a, #121212 70%); box-shadow: 0 8px 12px -6px rgb(0 0 0 / 45%); }
-    .pendulum { position: absolute; top: 38px; left: 50%; width: min(330px, 70%); margin-left: calc(min(330px, 70%) / -2); transform-origin: 44% 0; will-change: transform; }
-    .strap { position: absolute; top: 0; height: var(--strap, 22vh); background: linear-gradient(90deg, #0b0b0b, #2a2a2a 45%, #0b0b0b); }
-    .strap.left { left: 9.6%; width: 5%; }
-    .strap.right { left: 70.4%; width: 11.6%; }
-    .camera { position: relative; display: block; width: 100%; height: auto; margin-top: calc(var(--strap, 22vh) - 2px); filter: drop-shadow(0 26px 30px rgb(0 0 0 / 28%)); -webkit-user-drag: none; user-select: none; cursor: grab; }
-    .shadow { position: absolute; bottom: 9%; left: 50%; width: 220px; height: 26px; margin-left: -110px; border-radius: 50%; background: radial-gradient(closest-side, rgb(0 0 0 / 22%), transparent); }
+    .hang-zone { position: relative; align-self: stretch; grid-column: 2; grid-row: 1; min-height: 640px; }
     .copy { grid-column: 1; grid-row: 1; position: relative; z-index: 2; display: grid; gap: 20px; max-width: 560px; padding-block: 60px; }
     .title { font-size: var(--text-3xl); }
-    .title .script { display: block; font-size: 1.05em; color: var(--color-champagne); margin: 0.05em 0 0 0.5em; }
+    .title em { display: block; color: var(--color-accent); margin: 0.02em 0 0 0.6em; }
     .hint { display: inline-flex; align-items: center; gap: 10px; color: var(--color-muted); }
 
     .head { display: grid; gap: 14px; margin-bottom: 40px; }
     .title-2 { font-size: var(--text-2xl); }
-    .title-2 em { color: var(--color-champagne); }
-    .on-night .title-2 em { color: var(--color-champagne-soft); }
+    .title-2 em { color: var(--color-accent); }
+    .on-night .title-2 em { color: var(--color-accent-soft); }
     .center { text-align: center; }
     .list { border-top: 1px solid var(--color-line); }
     .item { border-bottom: 1px solid var(--color-line); }
@@ -157,44 +146,61 @@ import { Reveal } from '../shared/reveal';
     .item.open .panel-inner { padding-bottom: 34px; }
     .short { font-size: 1.05rem; color: var(--color-ink); }
     .why { margin-top: 12px; color: var(--color-ink-2); }
-    .why .script { font-size: 1.8rem; color: var(--color-champagne); margin-right: 4px; }
+    .why .script { font-size: 1.8rem; color: var(--color-accent); margin-right: 4px; }
     .sheet { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--color-line); }
     .sheet div { display: grid; grid-template-columns: 130px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--color-line-2); }
     .sheet dt { color: var(--color-muted); }
     .sheet dd { margin: 0; font-size: 0.95rem; }
     .thumb { width: 160px; height: auto; align-self: center; filter: drop-shadow(0 12px 18px rgb(0 0 0 / 25%)); }
-    .thumb.drone { width: 190px; animation: bob 4s ease-in-out infinite; }
-    @keyframes bob { 50% { translate: 0 -8px; } }
 
     .sky { position: relative; overflow: hidden; }
     .sky-deco { position: absolute; left: 6%; top: 12%; --size: 120px; opacity: 0.2; }
-    .sky-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+    .sky-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
     .copy-2 { display: grid; gap: 18px; }
-    .drone-zone { position: relative; height: 420px; display: grid; place-items: center; }
-    .drone { position: relative; z-index: 1; width: min(420px, 90%); animation: hover 3.6s ease-in-out infinite; transition: translate 900ms var(--ease-out); filter: drop-shadow(0 30px 30px rgb(0 0 0 / 45%)); -webkit-user-drag: none; user-select: none; }
-    @keyframes hover { 50% { margin-top: -18px; } }
-    .drone-shadow { position: absolute; bottom: 10px; width: 260px; height: 40px; border-radius: 50%; background: radial-gradient(closest-side, rgb(0 0 0 / 50%), transparent); transition: translate 900ms var(--ease-out); }
+    /* Pantalla del dron: el video se mueve como el gimbal y encima va la interfaz de vuelo. */
+    .fpv { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 18px; background: #000; box-shadow: 0 0 0 1px var(--color-line-night), 0 40px 80px -40px rgb(0 0 0 / 90%); cursor: crosshair; }
+    .feed { position: absolute; inset: -6%; transition: translate 1200ms var(--ease-out), scale 1200ms var(--ease-out); }
+    .feed video { width: 100%; height: 100%; object-fit: cover; filter: saturate(1.05) contrast(1.04); }
+    .hud { position: absolute; inset: 0; pointer-events: none; font-family: var(--font-label); font-size: clamp(0.56rem, 1vw, 0.7rem); letter-spacing: 0.14em; color: #fff; text-shadow: 0 1px 3px rgb(0 0 0 / 70%); }
+    .hud p { position: absolute; margin: 0; line-height: 1.6; }
+    .top-l { left: 22px; top: 18px; display: flex; align-items: center; gap: 8px; }
+    .top-r { right: 22px; top: 18px; display: flex; align-items: center; gap: 8px; }
+    .bot-l { left: 22px; bottom: 18px; }
+    .bot-r { right: 22px; bottom: 18px; text-align: right; }
+    .rec { width: 8px; height: 8px; border-radius: 50%; background: #ff4b3e; animation: rec 1.2s steps(1) infinite; }
+    @keyframes rec { 50% { opacity: 0.2; } }
+    .bat { display: inline-block; width: 22px; height: 10px; border: 1px solid #fff; border-radius: 2px; padding: 1px; }
+    .bat i { display: block; width: 80%; height: 100%; background: #fff; }
+    .c { position: absolute; width: 22px; height: 22px; border: 0 solid rgb(255 255 255 / 80%); }
+    .tl { left: 12px; top: 12px; border-width: 1.5px 0 0 1.5px; }
+    .tr { right: 12px; top: 12px; border-width: 1.5px 1.5px 0 0; }
+    .bl { left: 12px; bottom: 12px; border-width: 0 0 1.5px 1.5px; }
+    .br { right: 12px; bottom: 12px; border-width: 0 1.5px 1.5px 0; }
+    .thirds { position: absolute; inset: 0; background:
+      linear-gradient(90deg, transparent calc(33.33% - 0.5px), rgb(255 255 255 / 18%) 0 calc(33.33% + 0.5px), transparent 0 calc(66.66% - 0.5px), rgb(255 255 255 / 18%) 0 calc(66.66% + 0.5px), transparent 0),
+      linear-gradient(transparent calc(33.33% - 0.5px), rgb(255 255 255 / 18%) 0 calc(33.33% + 0.5px), transparent 0 calc(66.66% - 0.5px), rgb(255 255 255 / 18%) 0 calc(66.66% + 0.5px), transparent 0); }
+    .focus { position: absolute; left: 50%; top: 50%; width: 64px; height: 44px; translate: -50% -50%; border: 1px solid rgb(255 255 255 / 85%); border-radius: 4px; animation: focus 3s var(--ease-out) infinite; }
+    @keyframes focus { 0%, 100% { scale: 1; } 8% { scale: 1.25; } 16% { scale: 1; border-color: #9ff2a6; } 40% { border-color: rgb(255 255 255 / 85%); } }
+    .horizon { position: absolute; left: 50%; top: 50%; width: 160px; height: 1px; margin-left: -80px; background: linear-gradient(90deg, rgb(255 255 255 / 80%) 0 30%, transparent 30% 70%, rgb(255 255 255 / 80%) 70%); transition: rotate 800ms var(--ease-out); }
 
     .flow { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin: 56px 0; }
     .flow::before { content: ''; position: absolute; left: 16%; right: 16%; top: 28px; border-top: 1px dashed var(--color-line-2); }
     .flow li { position: relative; display: grid; justify-items: center; gap: 8px; text-align: center; }
     .dot { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--color-card); box-shadow: var(--shadow-paper); }
-    .flow .label { color: var(--color-champagne); margin-top: 8px; }
+    .flow .label { color: var(--color-accent); margin-top: 8px; }
     .flow-title { font-family: var(--font-display); font-style: italic; font-size: 1.5rem; }
     .flow-text { color: var(--color-ink-2); max-width: 30ch; }
     .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 
     @media (max-width: 900px) {
       .hero { grid-template-columns: 1fr; grid-template-rows: auto auto; min-height: 0; padding-top: 70px; }
-      .hang-zone { grid-column: 1; grid-row: 1; height: 600px; }
+      .hang-zone { grid-column: 1; grid-row: 1; height: 520px; min-height: 0; }
       .copy { grid-row: 2; padding-top: 10px; }
-      .pendulum { --strap: 100px; width: 210px; margin-left: -105px; }
       .row { grid-template-columns: 36px minmax(0, 1fr) 44px; }
       .row .group { display: none; }
       .panel-inner { grid-template-columns: 1fr; padding-left: 0; gap: 18px; }
       .thumb { width: 130px; }
       .sky-grid { grid-template-columns: 1fr; }
-      .drone-zone { height: 300px; }
       .flow { grid-template-columns: 1fr; }
       .flow::before { display: none; }
     }
@@ -203,113 +209,39 @@ import { Reveal } from '../shared/reveal';
 export default class Gear {
   protected readonly gear = GEAR;
   protected readonly open = signal<number | null>(0);
-  protected readonly camera = cutout('camara-colgante');
-  protected readonly cameraSrc = cutoutSrc('camara-colgante');
-  protected readonly droneSrc = cutoutSrc('dron');
-  protected readonly droneOffset = signal('0 0');
-  protected readonly droneShadow = signal('0 0');
+  protected readonly aerial = '/media/videos/aereo-jardin.mp4';
+  protected readonly aerialPoster = '/media/videos/aereo-jardin.jpg';
+  protected readonly gimbal = signal({ t: '0 0', s: '1' });
+  protected readonly hud = signal({ alt: 38, dist: 64, tilt: -42, roll: 0 });
+  protected readonly clock = signal('00');
   protected readonly backup = [
     { icon: 'camera' as const, when: 'En el evento', title: 'Doble tarjeta', text: 'Cada foto se graba en dos tarjetas al mismo tiempo, en cada cámara.' },
     { icon: 'download' as const, when: 'Esa misma noche', title: 'Discos en espejo', text: 'Al llegar al estudio, copio todo a un arreglo de discos que se respaldan entre sí.' },
     { icon: 'check' as const, when: 'Al día siguiente', title: 'Copia en la nube', text: 'Una tercera copia cifrada fuera del estudio. Las tarjetas no se borran hasta entregarte.' },
   ];
 
-  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
-  // Péndulo: ángulo (rad), velocidad angular (rad/s).
-  private theta = 0;
-  private omega = 0;
-  private last = { x: 0, t: 0 };
-
   constructor() {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
-      const el = this.host.querySelector<HTMLElement>('.pendulum')!;
-      const shadow = this.host.querySelector<HTMLElement>('.shadow')!;
-      const reduced = prefersReducedMotion();
-      let raf = 0;
-      let prev = performance.now();
-      let t = 0;
-      // Correa: del riel a la cámara, según el alto disponible.
-      const fit = () => {
-        const zone = this.host.querySelector<HTMLElement>('.hang-zone')!;
-        const camH = el.querySelector('img')!.getBoundingClientRect().height || 300;
-        const strap = Math.max(60, zone.clientHeight - camH - 150);
-        el.style.setProperty('--strap', `${innerWidth < 900 ? Math.min(90, strap) : strap}px`);
-      };
-      fit();
-      addEventListener('resize', fit);
-      // Un empujoncito al llegar, para que se note que cuelga.
-      if (!reduced) this.omega = 0.55;
-      const tick = (now: number) => {
-        raf = requestAnimationFrame(tick);
-        const dt = Math.min(0.033, (now - prev) / 1000);
-        prev = now;
-        t += dt;
-        const L = el.offsetHeight / 100; // metros "visuales"
-        const g = 9.8;
-        // θ'' = -(g/L)·sen θ − c·θ'  (amortiguado)
-        const alpha = -(g / Math.max(2.5, L)) * Math.sin(this.theta) - 0.55 * this.omega;
-        this.omega += alpha * dt;
-        this.theta += this.omega * dt;
-        this.theta = Math.max(-0.5, Math.min(0.5, this.theta));
-        // Vaivén muy leve aunque nadie la toque.
-        const idle = reduced ? 0 : Math.sin(t * 0.8) * 0.006;
-        const a = this.theta + idle;
-        el.style.transform = `rotate(${a.toFixed(4)}rad) rotateY(${(this.omega * 18).toFixed(2)}deg)`;
-        shadow.style.transform = `translateX(${(Math.sin(a) * 260).toFixed(1)}px) scaleX(${(1 - Math.abs(a) * 0.6).toFixed(3)})`;
-      };
-      raf = requestAnimationFrame(tick);
-      destroyRef.onDestroy(() => {
-        cancelAnimationFrame(raf);
-        removeEventListener('resize', fit);
-      });
+      // Reloj de grabación de la pantalla del dron.
+      const t0 = performance.now();
+      const id = setInterval(() => this.clock.set(String(Math.floor((performance.now() - t0) / 1000) % 60).padStart(2, '0')), 1000);
+      destroyRef.onDestroy(() => clearInterval(id));
     });
   }
 
-  /** El cursor o el dedo empujan la cámara solo si la tocan, con la velocidad que traen. */
-  protected push(e: PointerEvent) {
-    const now = performance.now();
-    const dt = Math.max(8, now - this.last.t);
-    const vx = (e.clientX - this.last.x) / dt; // px/ms
-    this.last = { x: e.clientX, t: now };
-    if (!this.overCamera(e) || Math.abs(vx) > 6) return;
-    this.omega += Math.max(-0.45, Math.min(0.45, vx * 0.22));
-  }
-
-  protected tap(e: PointerEvent) {
-    if (e.pointerType === 'mouse' || !this.overCamera(e)) return;
-    const img = this.host.querySelector('.camera')!.getBoundingClientRect();
-    this.omega += (e.clientX < img.left + img.width / 2 ? 1 : -1) * 0.5;
-  }
-
-  private overCamera(e: PointerEvent) {
-    const r = this.host.querySelector('.camera')!.getBoundingClientRect();
-    return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top + r.height * 0.45 && e.clientY < r.bottom;
-  }
-
-  /** El dron se aparta del cursor, despacio. */
-  protected dodge(e: PointerEvent | null) {
-    if (!e || e.pointerType !== 'mouse') {
-      this.droneOffset.set('0 0');
-      this.droneShadow.set('0 0');
+  /** El cursor mueve el gimbal: el video se desplaza y la telemetría cambia con él. */
+  protected aim(e: PointerEvent | null) {
+    if (!e || e.pointerType !== 'mouse' || prefersReducedMotion()) {
+      this.gimbal.set({ t: '0 0', s: '1' });
+      this.hud.set({ alt: 38, dist: 64, tilt: -42, roll: 0 });
       return;
     }
-    const zone = this.host.querySelector<HTMLElement>('.drone-zone')!.getBoundingClientRect();
-    const cx = zone.left + zone.width / 2;
-    const cy = zone.top + zone.height / 2;
-    const dx = cx - e.clientX;
-    const dy = cy - e.clientY;
-    const d = Math.hypot(dx, dy);
-    if (d > 420) {
-      this.droneOffset.set('0 0');
-      this.droneShadow.set('0 0');
-      return;
-    }
-    const f = (1 - d / 420) * 70;
-    const ox = (dx / (d || 1)) * f;
-    const oy = (dy / (d || 1)) * f * 0.6;
-    this.droneOffset.set(`${ox.toFixed(0)}px ${oy.toFixed(0)}px`);
-    this.droneShadow.set(`${ox.toFixed(0)}px 0`);
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    this.gimbal.set({ t: `${(-x * 5).toFixed(2)}% ${(-y * 5).toFixed(2)}%`, s: (1.02 + Math.abs(y) * 0.04).toFixed(3) });
+    this.hud.set({ alt: Math.round(38 - y * 14), dist: Math.round(64 + x * 20), tilt: Math.round(-42 - y * 20), roll: +(x * 6).toFixed(1) });
   }
 
   protected toggle(i: number) {

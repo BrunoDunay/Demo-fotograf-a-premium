@@ -175,26 +175,42 @@ export class PhotoPile {
   }
 
   // ===== Caída =====
+  /**
+   * Como cuando alguien suelta un bonche de fotos sobre la mesa: caen juntas, casi alineadas, con gravedad;
+   * al tocar la mesa se abren en abanico (las de arriba resbalan más lejos) y frenan con fricción.
+   */
   private dropIn(cards: PileCard[], first = false) {
     const { gsap } = useGsap();
     const reduced = prefersReducedMotion();
     const c = this.pileCenter();
     this.dropping.set(true);
+    const n = cards.length;
+    const baseR = (Math.random() - 0.5) * 24;
+    // El bonche cae un poco fuera del centro del montón.
+    const hx = c.x + (Math.random() - 0.5) * c.sx * 0.5;
+    const hy = c.y + (Math.random() - 0.5) * c.sy * 0.5;
+    const start = first ? 0.25 : 0.05;
+    const fall = 0.46;
     cards.forEach((card, i) => {
       const el = this.table.querySelector<HTMLElement>(`[data-id="${card.id}"]`);
       if (!el) return;
-      // Distribución tipo montón: más densa en el centro.
-      const gx = (Math.random() + Math.random() - 1) * c.sx;
-      const gy = (Math.random() + Math.random() - 1) * c.sy;
-      const tr = (Math.random() - 0.5) * 34;
+      const up = n > 1 ? i / (n - 1) : 0; // 0 = la de hasta abajo, 1 = la de hasta arriba
+      // A dónde resbala: alrededor del punto de caída, más lejos las de arriba.
+      const ang = Math.random() * Math.PI * 2;
+      const reach = 0.25 + up * 0.75;
+      const gx = Math.cos(ang) * c.sx * reach * (0.6 + Math.random() * 0.5);
+      const gy = Math.sin(ang) * c.sy * reach * (0.6 + Math.random() * 0.5);
+      const tx = Math.max(this.cw * 0.4, Math.min(this.W - this.cw * 0.4, hx + gx));
+      const ty = Math.max(this.ch * 0.4, Math.min(this.H - this.ch * 0.4, hy + gy));
+      const tr = baseR + (Math.random() - 0.5) * (14 + up * 46);
       const b: Body = {
         id: card.id,
         el,
-        x: c.x + gx + (Math.random() - 0.5) * 60,
-        y: c.y + gy - 40,
-        r: tr + (Math.random() - 0.5) * 70,
-        s: 1.9 + Math.random() * 0.4,
-        lift: 2.2,
+        x: hx + (Math.random() - 0.5) * 14,
+        y: hy - 30 + (Math.random() - 0.5) * 14,
+        r: baseR + (Math.random() - 0.5) * 7,
+        s: 1.5 + up * 0.06,
+        lift: 1.6,
         o: 0,
         vx: 0,
         vy: 0,
@@ -206,22 +222,27 @@ export class PhotoPile {
       el.classList.add('live');
       this.bodies.set(card.id, b);
       this.render(b);
-      const delay = (first ? 0.15 : 0.05) + i * (first ? 0.085 : 0.11);
       if (reduced) {
-        Object.assign(b, { x: c.x + gx, y: c.y + gy, r: tr, s: 1, lift: 0, o: 1, mode: 'rest' });
+        Object.assign(b, { x: tx, y: ty, r: tr, s: 1, lift: 0, o: 1, mode: 'rest' });
         this.render(b);
         return;
       }
-      // Cae hacia la mesa: se acerca desde la cámara (escala grande, sombra difusa) y se asienta con un pequeño deslizamiento.
-      const tl = gsap.timeline({ delay, onUpdate: () => this.render(b), onComplete: () => void (b.mode === 'drop' && (b.mode = 'rest')) });
-      tl.to(b, { o: 1, duration: 0.18, ease: 'none' }, 0)
-        .to(b, { s: 1, lift: 0, y: c.y + gy, duration: 0.62, ease: 'power2.in' }, 0)
-        .to(b, { r: tr, duration: 0.75, ease: 'power3.out' }, 0)
-        .to(b, { x: c.x + gx, duration: 0.95, ease: 'power3.out' }, 0)
-        .to(b, { s: 1.015, duration: 0.08, ease: 'power1.out', yoyo: true, repeat: 1 }, 0.62);
+      // Las de abajo tocan la mesa una fracción antes que las de arriba.
+      const t0 = start + i * 0.016;
+      const slide = 0.55 + up * 0.5 + Math.random() * 0.15;
+      const tl = gsap.timeline({ delay: t0, onUpdate: () => this.render(b), onComplete: () => void (b.mode === 'drop' && (b.mode = 'rest')) });
+      tl.to(b, { o: 1, duration: 0.12, ease: 'none' }, 0)
+        .to(b, { s: 1, lift: 0.12, y: hy + (b.y - hy + 30) * 0.4, duration: fall, ease: 'power2.in' }, 0)
+        // Golpe contra la mesa.
+        .to(b, { s: 0.985, duration: 0.06, ease: 'power1.out' }, fall)
+        .to(b, { s: 1, duration: 0.18, ease: 'power2.out' }, fall + 0.06)
+        // Resbalan y frenan.
+        .to(b, { x: tx, y: ty, duration: slide, ease: 'power3.out' }, fall)
+        .to(b, { r: tr, duration: slide * 1.1, ease: 'power3.out' }, fall)
+        .to(b, { lift: 0, duration: 0.3, ease: 'power2.out' }, fall);
       (b as Body & { tl?: gsap.core.Timeline }).tl = tl;
     });
-    setTimeout(() => this.dropping.set(false), 400 + cards.length * 110);
+    setTimeout(() => this.dropping.set(false), (start + fall + 1.1) * 1000);
   }
 
   protected dropMore() {

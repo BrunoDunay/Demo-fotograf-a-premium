@@ -79,13 +79,13 @@ export interface ViewerItem {
       display: grid;
       place-items: center;
       padding: 64px var(--gutter) 56px;
-      background: rgb(239 236 230 / 94%);
+      background: rgb(233 235 239 / 94%);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       color: var(--color-ink);
       animation: fade-in 420ms var(--ease-out) both;
     }
-    .viewer.night { background: rgb(8 8 9 / 94%); color: var(--color-on-night); }
+    .viewer.night { background: rgb(7 11 22 / 94%); color: var(--color-on-night); }
     .viewer.closing { animation: fade-out 220ms ease-in both; }
     .viewer.closing .frame { animation: frame-out 220ms ease-in both; }
     @keyframes fade-in { from { opacity: 0; } }

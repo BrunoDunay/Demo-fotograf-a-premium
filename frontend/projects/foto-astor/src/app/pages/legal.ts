@@ -98,18 +98,18 @@ const DOCS: Record<string, Doc> = {
   styles: `
     .legal { position: relative; overflow: hidden; padding: 150px 0 110px; }
     .bg { position: absolute; inset: 0; background-size: cover; background-position: center 30%; filter: grayscale(1) brightness(0.48) contrast(1.05); scale: 1.04; }
-    .bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgb(10 10 11 / 92%), rgb(10 10 11 / 55%) 70%, rgb(10 10 11 / 35%)); }
+    .bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgb(7 11 22 / 92%), rgb(7 11 22 / 55%) 70%, rgb(7 11 22 / 35%)); }
     .inner { position: relative; max-width: 860px; margin-inline: 0 auto; }
     .brand { color: var(--color-on-night-2); }
     .title { font-family: var(--font-display); font-style: italic; font-size: var(--text-3xl); margin-top: 18px; }
-    .sub { font-size: clamp(2.2rem, 5vw, 3.4rem); color: var(--color-champagne-soft); margin-top: 0.4em; }
+    .sub { font-size: clamp(2.2rem, 5vw, 3.4rem); color: var(--color-accent-soft); margin-top: 0.4em; }
     .intro { margin-top: 26px; max-width: 60ch; color: var(--color-on-night-2); font-size: 1.05rem; }
     .timeline { position: relative; margin-top: 56px; padding-left: 36px; display: grid; gap: 34px; }
-    .timeline::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 1px; background: rgb(236 232 225 / 55%); }
+    .timeline::before { content: ''; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 1px; background: rgb(233 236 243 / 55%); }
     .timeline li { position: relative; }
     .dot { position: absolute; left: -36px; top: 6px; width: 15px; height: 15px; border-radius: 50%; background: var(--color-on-night); }
-    .h { font-family: var(--font-display); font-size: clamp(1.4rem, 2.6vw, 1.9rem); text-transform: uppercase; letter-spacing: 0.04em; font-variation-settings: 'opsz' 40; }
-    .p { margin-top: 10px; max-width: 64ch; color: rgb(236 232 225 / 78%); line-height: 1.7; }
+    .h { font-family: var(--font-display); font-size: clamp(1.4rem, 2.6vw, 1.9rem); text-transform: uppercase; letter-spacing: 0.04em; }
+    .p { margin-top: 10px; max-width: 64ch; color: rgb(233 236 243 / 78%); line-height: 1.7; }
     .updated { margin-top: 56px; color: var(--color-on-night-2); }
     .others { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 18px; }
     .others a { min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; text-underline-offset: 4px; color: var(--color-on-night-2); }

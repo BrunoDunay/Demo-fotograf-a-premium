@@ -3,12 +3,27 @@ import { BRAND } from '../core/content';
 import { hasFinePointer, prefersReducedMotion } from '../core/motion';
 import { Icon } from '../shared/icon';
 
-const LAYERS = 8;
+/** Colores de la tarjeta: papel, tinta, foil y canto pintado. */
+const VARIANTS = [
+  { id: 'porcelana', label: 'Porcelana', paper: '#f3f2ee', ink: '#141b2d', foil: '#c9ccd3', edge: '#a4514f' },
+  { id: 'medianoche', label: 'Medianoche', paper: '#121a2e', ink: '#e4e7ee', foil: '#e6b0a8', edge: '#e6b0a8' },
+  { id: 'rosa', label: 'Palo de rosa', paper: '#e6c7c1', ink: '#3b2228', foil: '#f1e6d6', edge: '#3b2228' },
+  { id: 'carbon', label: 'Carbón', paper: '#222326', ink: '#d9d5cd', foil: '#d6b27a', edge: '#d6b27a' },
+] as const;
+type Variant = (typeof VARIANTS)[number];
+
+// Tarjeta estándar 3.5 × 2 pulgadas: proporción 1.75, cartulina gruesa.
+const CW = 1.75;
+const CH = 1;
+const DEPTH = 0.016;
+const TW = 2048;
+const TH = Math.round(TW / 1.75);
 
 /**
- * Tarjeta de presentación en 3D: algodón de 600 g con letras hundidas (letterpress), estrella y órbita en foil
- * plateado y cantos pintados de negro. Se gira libre arrastrándola (con inercia), se voltea con doble toque o
- * con el botón y, quieta, se acomoda sola mostrando la cara más cercana. El foil brilla según el ángulo.
+ * Tarjeta de presentación en 3D (Three.js): cartulina rectangular con esquinas en punta, letras hundidas
+ * (letterpress), foil metálico que refleja la luz de verdad según el ángulo y canto pintado.
+ * Se gira libre arrastrándola (con inercia), se voltea con el botón o doble toque y, quieta, se acomoda en la
+ * cara más cercana. Se puede cambiar el color del papel.
  */
 @Component({
   selector: 'app-business-card',
@@ -24,118 +39,50 @@ const LAYERS = 8;
       (pointerleave)="leave()"
       (dblclick)="flip()"
       role="img"
-      [attr.aria-label]="'Tarjeta de presentación de ' + brand.person + '. Arrástrala para girarla.'"
+      [attr.aria-label]="'Tarjeta de presentación de ' + brand.person + ', color ' + variant().label + '. Arrástrala para girarla.'"
     >
-      <div class="card">
-        @for (l of layers; track l) {
-          <span class="edge" [style.transform]="'translateZ(' + (l * 0.5 - 1.75) + 'px)'"></span>
-        }
-        <div class="face front">
-          <svg class="emboss" viewBox="0 0 350 200" aria-hidden="true">
-            <ellipse cx="175" cy="100" rx="150" ry="52" transform="rotate(-9 175 100)" class="hi" />
-            <ellipse cx="175" cy="100" rx="150" ry="52" transform="rotate(-9 175 100)" class="lo" />
-          </svg>
-          <svg class="foil orbit" viewBox="0 0 350 200" aria-hidden="true">
-            <ellipse cx="175" cy="100" rx="128" ry="34" transform="rotate(-9 175 100)" />
-            <circle cx="296" cy="72" r="2.6" />
-          </svg>
-          <svg class="foil star" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" />
-          </svg>
-          <p class="mark">ASTOR</p>
-          <p class="tag">Fotografía · Aguascalientes</p>
-          <span class="light"></span>
-        </div>
-        <div class="face back">
-          <svg class="ink" viewBox="0 0 160 200" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
-            <circle cx="70" cy="96" r="54" class="wash" />
-            <path class="brush" d="M-10 150 C 30 120, 60 70, 120 40 C 140 30, 150 34, 132 50 C 90 86, 60 130, 20 176 Z" />
-            <path class="brush thin" d="M10 190 C 40 150, 80 120, 150 104 C 160 102, 160 108, 150 112 C 96 130, 60 160, 30 200 Z" />
-            <ellipse class="foil-line" cx="80" cy="110" rx="70" ry="20" transform="rotate(-20 80 110)" />
-          </svg>
-          <div class="details">
-            <p class="who">{{ brand.person }}</p>
-            <p class="role">Fotógrafo · Bodas y eventos</p>
-            <span class="rule"></span>
-            <p>{{ brand.web }}</p>
-            <p>{{ brand.instagram }}</p>
-            <p>{{ brand.email }}</p>
-            <p>{{ brand.phone }}</p>
-            <p>{{ brand.city }}, Ags.</p>
-          </div>
-          <p class="foot">Bodas <span class="spark">✦</span> XV años <span class="spark">✦</span> Eventos</p>
-          <span class="light"></span>
-        </div>
-      </div>
+      <canvas></canvas>
       <span class="ground"></span>
     </div>
+    <div class="swatches" role="radiogroup" aria-label="Color de la tarjeta">
+      @for (v of variants; track v.id) {
+        <button type="button" class="sw" role="radio" [attr.aria-checked]="variant().id === v.id" [attr.aria-label]="v.label" (click)="setVariant(v)">
+          <span class="dot" [style.background]="v.paper" [style.--foil]="v.foil"></span>
+          <span class="sw-label">{{ v.label }}</span>
+        </button>
+      }
+    </div>
     <div class="controls">
-      <button type="button" class="btn btn-line" (click)="flip()"><app-icon name="flip" [size]="16" /> Voltear</button>
+      <button type="button" class="btn btn-line" (click)="flip()"><app-icon name="flip" [size]="16" /> <span class="btn-t">Voltear</span></button>
       <p class="label hint"><app-icon name="drag" [size]="15" /> Arrástrala para verla de lado</p>
     </div>
-    <p class="specs label">Algodón 600 g · letterpress · foil plata · cantos pintados</p>
   `,
   styles: `
     :host { display: grid; justify-items: center; gap: 18px; }
-    .scene { position: relative; display: grid; place-items: center; width: min(420px, 88vw); aspect-ratio: 1.25; perspective: 1100px; cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+    .scene { position: relative; width: min(460px, 90vw); aspect-ratio: 1.3; cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
     .scene:active { cursor: grabbing; }
-    .card { --sx: 50%; --sy: 30%; --sheen: 50%; position: relative; width: min(360px, 80vw); aspect-ratio: 1.75; transform-style: preserve-3d; will-change: transform; }
-    .edge, .face { position: absolute; inset: 0; border-radius: 9px; }
-    .edge { background: #1c1b19; }
-    .face { overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; background-color: #f3f0e9; color: #1e1d1b;
-      background-image:
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' seed='8'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.42 0 0 0 0 0.36 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E"),
-        radial-gradient(120% 90% at 30% 20%, #f8f6f1, #ebe7de);
-      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 40%), inset 0 0 22px rgb(120 110 95 / 16%);
-    }
-    .front { transform: translateZ(2px); }
-    .back { transform: rotateY(180deg) translateZ(2px); }
-
-    /* Letterpress: tinta hundida en el papel. */
-    .mark { position: absolute; left: 0; right: 0; top: 37%; text-align: center; font-family: var(--font-display); font-variation-settings: 'opsz' 96; font-size: clamp(2rem, 9vw, 2.9rem); letter-spacing: 0.12em; line-height: 1; color: #1c1b19; text-shadow: 0 1px 0 rgb(255 255 255 / 75%), 0 -1px 0 rgb(0 0 0 / 18%); }
-    .tag { position: absolute; left: 0; right: 0; bottom: 15%; text-align: center; font-family: var(--font-label); font-size: clamp(0.5rem, 2vw, 0.62rem); letter-spacing: 0.42em; text-transform: uppercase; color: #3b3935; text-shadow: 0 1px 0 rgb(255 255 255 / 70%); }
-    /* Golpe en seco (sin tinta): una órbita grande apenas marcada. */
-    .emboss { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; }
-    .emboss .hi { stroke: rgb(255 255 255 / 85%); stroke-width: 2.2; transform: translate(0.8px, 1px); }
-    .emboss .lo { stroke: rgb(110 100 85 / 30%); stroke-width: 1.6; }
-    /* Foil plata: brillo que corre con el ángulo de la tarjeta. */
-    .foil { position: absolute; overflow: visible; filter: brightness(var(--foilb, 1)) drop-shadow(0 0 0.6px rgb(255 255 255 / 80%)); }
-    .orbit { inset: 0; width: 100%; height: 100%; fill: none; stroke: #a9a7a2; stroke-width: 1.1; }
-    .orbit circle { fill: #b9b7b2; stroke: none; }
-    .star { left: 22%; top: 18%; width: 9%; aspect-ratio: 1; }
-    .star path { fill: #b9b7b2; }
-    .foil-line { filter: brightness(var(--foilb, 1)); }
-    .light { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light; background: radial-gradient(circle at var(--sx) var(--sy), rgb(255 255 255 / 85%), transparent 46%); }
-    .light::after { content: ''; position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.35; background: linear-gradient(115deg, transparent calc(var(--sheen) - 18%), rgb(255 255 255 / 55%) var(--sheen), transparent calc(var(--sheen) + 18%)); }
-
-    .ink { position: absolute; left: 0; top: 0; width: 44%; height: 100%; }
-    .wash { fill: rgb(60 58 54 / 16%); }
-    .brush { fill: #1d1c1a; opacity: 0.88; }
-    .brush.thin { opacity: 0.55; }
-    .foil-line { fill: none; stroke: #c9c7c1; stroke-width: 1; }
-    .details { position: absolute; left: 47%; right: 7%; top: 13%; display: grid; gap: 2px; font-family: var(--font-label); font-size: clamp(0.5rem, 2.2vw, 0.68rem); letter-spacing: 0.14em; text-transform: uppercase; color: #2a2926; text-shadow: 0 1px 0 rgb(255 255 255 / 70%); }
-    .who { font-family: var(--font-display); font-variation-settings: 'opsz' 40; font-size: clamp(1rem, 4.4vw, 1.35rem); letter-spacing: 0.06em; text-transform: none; color: #1c1b19; }
-    .role { font-size: 0.86em; letter-spacing: 0.22em; color: #6b6760; }
-    .rule { width: 26px; height: 1px; margin: 7px 0 6px; background: #b9b7b2; }
-    .foot { position: absolute; left: 47%; right: 7%; bottom: 9%; font-family: var(--font-label); font-size: clamp(0.4rem, 1.6vw, 0.5rem); letter-spacing: 0.3em; text-transform: uppercase; color: #8a867e; }
-    .spark { color: #b9b7b2; }
-    .ground { position: absolute; left: 18%; right: 18%; bottom: 4%; height: 22px; border-radius: 50%; background: radial-gradient(closest-side, rgb(30 22 12 / 30%), transparent); filter: blur(4px); will-change: transform; }
-
+    canvas { position: relative; z-index: 1; width: 100%; height: 100%; }
+    .ground { position: absolute; left: 20%; right: 20%; bottom: 8%; height: 26px; border-radius: 50%; background: radial-gradient(closest-side, rgb(10 16 34 / 34%), transparent); filter: blur(6px); will-change: transform; }
+    .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .sw { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px 0 6px; border-radius: var(--radius-pill); font-size: 0.82rem; color: var(--color-muted); transition: background-color 250ms ease, color 250ms ease; }
+    .sw[aria-checked='true'] { background: var(--color-card); color: var(--color-ink); box-shadow: var(--shadow-paper); }
+    .dot { position: relative; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 14%); overflow: hidden; transition: scale 400ms var(--ease-spring); }
+    .dot::after { content: ''; position: absolute; right: 4px; top: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--foil); }
+    .sw[aria-checked='true'] .dot { scale: 1.12; }
+    @media (hover: hover) and (pointer: fine) { .sw:hover { color: var(--color-ink); } .sw:hover .dot { scale: 1.12; } }
     .controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 20px; }
     .controls .btn { min-height: 44px; padding: 0 18px; font-size: 0.68rem; }
     .hint { display: inline-flex; align-items: center; gap: 8px; color: var(--color-muted); }
-    .specs { color: var(--color-muted); font-size: 0.6rem; text-align: center; }
   `,
 })
 export class BusinessCard {
   protected readonly brand = BRAND;
-  protected readonly layers = Array.from({ length: LAYERS }, (_, i) => i);
-  protected readonly dragging = signal(false);
+  protected readonly variants = VARIANTS;
+  protected readonly variant = signal<Variant>(VARIANTS[0]);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
-  // Estado: giro actual (grados), velocidad y objetivo de inclinación por cursor.
-  private ry = -18;
-  private rx = 8;
+  private ry = -22;
+  private rx = 10;
   private vy = 0;
   private vx = 0;
   private hoverX = 0;
@@ -143,12 +90,80 @@ export class BusinessCard {
   private drag: { x: number; y: number; t: number; id: number } | null = null;
   private lastInput = 0;
   private flipTo: number | null = null;
+  private repaint?: (v: Variant) => void;
 
   constructor() {
     const destroyRef = inject(DestroyRef);
-    afterNextRender(() => {
-      const card = this.host.querySelector<HTMLElement>('.card')!;
-      const ground = this.host.querySelector<HTMLElement>('.ground')!;
+    afterNextRender(async () => {
+      const THREE = await import('three');
+      const { RoomEnvironment } = await import('three/examples/jsm/environments/RoomEnvironment.js');
+      await Promise.all(
+        ['400 100px "Instrument Serif"', 'italic 400 100px "Instrument Serif"', '500 40px "Instrument Sans Variable"', '400 40px "Hanken Grotesk Variable"'].map((f) =>
+          document.fonts.load(f).catch(() => null),
+        ),
+      );
+      const scene = this.host.querySelector<HTMLElement>('.scene')!;
+      const canvas = scene.querySelector('canvas')!;
+      const ground = scene.querySelector<HTMLElement>('.ground')!;
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1;
+      const s = new THREE.Scene();
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      s.environment = env;
+      s.environmentIntensity = 0.45;
+      const camera = new THREE.PerspectiveCamera(28, 1.3, 0.1, 20);
+      camera.position.set(0, 0, 3.55);
+      const key = new THREE.DirectionalLight(0xffffff, 2.2);
+      key.position.set(-2, 3, 4);
+      s.add(key);
+      s.add(new THREE.AmbientLight(0xffffff, 0.25));
+
+      const aniso = renderer.capabilities.getMaxAnisotropy();
+      const tex = (c: HTMLCanvasElement, color = false) => {
+        const t = new THREE.CanvasTexture(c);
+        t.anisotropy = aniso;
+        if (color) t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      };
+      const faceMat = () =>
+        new THREE.MeshStandardMaterial({ roughness: 1, metalness: 1, bumpScale: 1.4 });
+      const front = faceMat();
+      const back = faceMat();
+      const edge = new THREE.MeshStandardMaterial({ roughness: 0.7, metalness: 0 });
+      const card = new THREE.Mesh(new THREE.BoxGeometry(CW, CH, DEPTH), [edge, edge, edge, edge, front, back]);
+      s.add(card);
+
+      const apply = (mat: InstanceType<typeof THREE.MeshStandardMaterial>, f: FaceCanvases) => {
+        mat.map?.dispose();
+        mat.bumpMap?.dispose();
+        mat.roughnessMap?.dispose();
+        mat.metalnessMap?.dispose();
+        mat.map = tex(f.map, true);
+        mat.bumpMap = tex(f.bump);
+        mat.roughnessMap = tex(f.rough);
+        mat.metalnessMap = tex(f.metal);
+        mat.needsUpdate = true;
+      };
+      this.repaint = (v: Variant) => {
+        apply(front, drawFace(v, 'front'));
+        apply(back, drawFace(v, 'back'));
+        edge.color.set(v.edge);
+      };
+      this.repaint(this.variant());
+
+      const resize = () => {
+        const r = scene.getBoundingClientRect();
+        renderer.setSize(r.width, r.height, false);
+        camera.aspect = r.width / r.height;
+        camera.updateProjectionMatrix();
+      };
+      resize();
+      const ro = new ResizeObserver(resize);
+      ro.observe(scene);
+
       const reduced = prefersReducedMotion();
       let raf = 0;
       let prev = performance.now();
@@ -163,7 +178,6 @@ export class BusinessCard {
         if (!visible) return;
         t += dt;
         if (!this.drag) {
-          // Inercia que se apaga.
           this.ry += this.vy * dt;
           this.rx += this.vx * dt;
           this.vy *= Math.pow(0.12, dt);
@@ -174,33 +188,51 @@ export class BusinessCard {
             this.rx += (0 - this.rx) * Math.min(1, dt * 6);
             if (Math.abs(this.flipTo - this.ry) < 0.3) this.flipTo = null;
           } else if (idle) {
-            // Quieta, se acomoda en la cara más cercana y se mece despacio.
+            // Quieta, se acomoda en la cara más cercana y se mece despacio con el cursor.
             const face = Math.round(this.ry / 180) * 180;
-            const sway = reduced ? 0 : Math.sin(t * 0.6) * 12 + this.hoverX * 16;
-            const tilt = reduced ? 0 : Math.cos(t * 0.45) * 5 - this.hoverY * 10;
+            const sway = reduced ? 0 : Math.sin(t * 0.6) * 12 + this.hoverX * 18;
+            const tilt = reduced ? 0 : Math.cos(t * 0.45) * 6 + this.hoverY * 12;
             this.ry += (face + sway - this.ry) * Math.min(1, dt * 2.2);
             this.rx += (tilt - this.rx) * Math.min(1, dt * 2.2);
           }
         }
         this.rx = Math.max(-70, Math.min(70, this.rx));
-        card.style.transform = `rotateX(${this.rx.toFixed(2)}deg) rotateY(${this.ry.toFixed(2)}deg)`;
-        // Luz y foil según el ángulo.
-        const ny = ((((this.ry % 360) + 540) % 360) - 180) / 180; // -1..1
-        card.style.setProperty('--sheen', `${(50 + Math.sin((this.ry * Math.PI) / 180) * 45 + this.rx * 0.6).toFixed(1)}%`);
-        card.style.setProperty('--sx', `${(50 - ny * 60).toFixed(1)}%`);
-        card.style.setProperty('--sy', `${(30 + this.rx * 0.8).toFixed(1)}%`);
-        // El foil destella cuando la tarjeta pasa por cierto ángulo, como el metal real.
-        const glint = Math.pow(Math.max(0, Math.cos(((this.ry % 180) + this.rx - 20) * (Math.PI / 90))), 6);
-        card.style.setProperty('--foilb', (0.9 + glint * 0.75).toFixed(3));
+        card.rotation.set((this.rx * Math.PI) / 180, (this.ry * Math.PI) / 180, 0, 'YXZ');
+        // La luz sigue un poco al cursor para que el foil destelle al mover la mano.
+        key.position.set(-2 + this.hoverX * 2.5, 3 - this.hoverY * 2, 4);
+        renderer.render(s, camera);
         const c = Math.abs(Math.cos((this.ry * Math.PI) / 180));
-        ground.style.transform = `scaleX(${(0.35 + c * 0.65).toFixed(3)}) translateY(${(this.rx * 0.3).toFixed(1)}px)`;
+        ground.style.transform = `scaleX(${(0.3 + c * 0.7).toFixed(3)}) translateY(${(this.rx * 0.2).toFixed(1)}px)`;
       };
       raf = requestAnimationFrame(tick);
       destroyRef.onDestroy(() => {
         cancelAnimationFrame(raf);
         io.disconnect();
+        ro.disconnect();
+        for (const m of [front, back]) {
+          m.map?.dispose();
+          m.bumpMap?.dispose();
+          m.roughnessMap?.dispose();
+          m.metalnessMap?.dispose();
+          m.dispose();
+        }
+        edge.dispose();
+        card.geometry.dispose();
+        env.dispose();
+        pmrem.dispose();
+        renderer.dispose();
       });
     });
+  }
+
+  protected setVariant(v: Variant) {
+    this.variant.set(v);
+    this.repaint?.(v);
+    // Un medio giro para lucir el cambio.
+    if (!prefersReducedMotion()) {
+      this.vy = 260;
+      this.lastInput = performance.now() - 600;
+    }
   }
 
   protected down(e: PointerEvent) {
@@ -210,7 +242,6 @@ export class BusinessCard {
     this.vx = this.vy = 0;
     this.lastInput = performance.now();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    this.dragging.set(true);
   }
 
   protected move(e: PointerEvent) {
@@ -220,9 +251,9 @@ export class BusinessCard {
       const dy = e.clientY - this.drag.y;
       const dt = Math.max(1, now - this.drag.t) / 1000;
       this.ry += dx * 0.5;
-      this.rx -= dy * 0.4;
+      this.rx += dy * 0.4;
       this.vy = (dx * 0.5) / dt;
-      this.vx = (-dy * 0.4) / dt;
+      this.vx = (dy * 0.4) / dt;
       this.drag = { ...this.drag, x: e.clientX, y: e.clientY, t: now };
       this.lastInput = now;
       return;
@@ -236,7 +267,6 @@ export class BusinessCard {
   protected up(e: PointerEvent) {
     if (!this.drag || e.pointerId !== this.drag.id) return;
     this.drag = null;
-    this.dragging.set(false);
     this.lastInput = performance.now();
     this.vy = Math.max(-900, Math.min(900, this.vy));
     this.vx = Math.max(-500, Math.min(500, this.vx));
@@ -252,4 +282,157 @@ export class BusinessCard {
     this.vx = this.vy = 0;
     this.lastInput = performance.now();
   }
+}
+
+interface FaceCanvases {
+  map: HTMLCanvasElement;
+  bump: HTMLCanvasElement;
+  rough: HTMLCanvasElement;
+  metal: HTMLCanvasElement;
+}
+
+/**
+ * Dibuja una cara en cuatro capas: color, relieve (bump), aspereza y metal.
+ * - tinta (letterpress): color de tinta y hundida en el relieve;
+ * - foil: color del foil, metálica, lisa y apenas levantada;
+ * - golpe en seco: solo relieve, sin tinta.
+ */
+function drawFace(v: Variant, side: 'front' | 'back'): FaceCanvases {
+  const make = () => {
+    const c = document.createElement('canvas');
+    c.width = TW;
+    c.height = TH;
+    return c;
+  };
+  const f: FaceCanvases = { map: make(), bump: make(), rough: make(), metal: make() };
+  const map = f.map.getContext('2d')!;
+  const bump = f.bump.getContext('2d')!;
+  const rough = f.rough.getContext('2d')!;
+  const metal = f.metal.getContext('2d')!;
+
+  // Papel: color con fibras finas, relieve de algodón, mate.
+  map.fillStyle = v.paper;
+  map.fillRect(0, 0, TW, TH);
+  bump.fillStyle = '#808080';
+  bump.fillRect(0, 0, TW, TH);
+  rough.fillStyle = 'rgb(225,225,225)';
+  rough.fillRect(0, 0, TW, TH);
+  metal.fillStyle = '#000';
+  metal.fillRect(0, 0, TW, TH);
+  const dark = luminance(v.paper) < 0.4;
+  for (let i = 0; i < 9000; i++) {
+    const x = Math.random() * TW;
+    const y = Math.random() * TH;
+    const r = Math.random() * 2.2 + 0.4;
+    map.fillStyle = dark ? `rgba(255,255,255,${Math.random() * 0.035})` : `rgba(60,50,40,${Math.random() * 0.05})`;
+    map.fillRect(x, y, r * 3, r * 0.6);
+    const g = 128 + (Math.random() - 0.5) * 30;
+    bump.fillStyle = `rgb(${g},${g},${g})`;
+    bump.fillRect(x, y, r * 2, r);
+  }
+
+  const ink = (draw: (c: CanvasRenderingContext2D) => void, alpha = 1) => {
+    map.save();
+    map.globalAlpha = alpha;
+    map.fillStyle = map.strokeStyle = v.ink;
+    draw(map);
+    map.restore();
+    bump.save();
+    bump.filter = 'blur(2px)';
+    bump.fillStyle = bump.strokeStyle = '#4a4a4a';
+    draw(bump);
+    bump.restore();
+  };
+  const foil = (draw: (c: CanvasRenderingContext2D) => void) => {
+    map.save();
+    map.fillStyle = map.strokeStyle = v.foil;
+    draw(map);
+    map.restore();
+    metal.save();
+    metal.fillStyle = metal.strokeStyle = '#fff';
+    draw(metal);
+    metal.restore();
+    rough.save();
+    rough.fillStyle = rough.strokeStyle = 'rgb(60,60,60)';
+    draw(rough);
+    rough.restore();
+    bump.save();
+    bump.filter = 'blur(1.5px)';
+    bump.fillStyle = bump.strokeStyle = '#a0a0a0';
+    draw(bump);
+    bump.restore();
+  };
+  const blind = (draw: (c: CanvasRenderingContext2D) => void) => {
+    bump.save();
+    bump.filter = 'blur(5px)';
+    bump.fillStyle = bump.strokeStyle = '#b4b4b4';
+    draw(bump);
+    bump.restore();
+  };
+  const star = (c: CanvasRenderingContext2D, x: number, y: number, s: number) => {
+    c.beginPath();
+    c.moveTo(x, y - s);
+    c.quadraticCurveTo(x + s * 0.1, y - s * 0.1, x + s, y);
+    c.quadraticCurveTo(x + s * 0.1, y + s * 0.1, x, y + s);
+    c.quadraticCurveTo(x - s * 0.1, y + s * 0.1, x - s, y);
+    c.quadraticCurveTo(x - s * 0.1, y - s * 0.1, x, y - s);
+    c.fill();
+  };
+  const orbit = (c: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, w: number) => {
+    c.lineWidth = w;
+    c.beginPath();
+    c.ellipse(x, y, rx, ry, (-8 * Math.PI) / 180, 0, Math.PI * 2);
+    c.stroke();
+  };
+  const text = (c: CanvasRenderingContext2D, s: string, x: number, y: number, font: string, spacing = 0, align: CanvasTextAlign = 'left') => {
+    c.font = font;
+    c.textAlign = align;
+    c.textBaseline = 'alphabetic';
+    (c as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${spacing}px`;
+    c.fillText(s, x, y);
+  };
+
+  const cx = TW / 2;
+  if (side === 'front') {
+    // Frente: órbita y estrella en foil, ASTOR hundido al centro y una línea de oficio abajo.
+    blind((c) => orbit(c, cx, TH * 0.5, TW * 0.46, TH * 0.2, 10));
+    foil((c) => orbit(c, cx, TH * 0.47, TW * 0.27, TH * 0.11, 5));
+    foil((c) => {
+      const a = (-0.62 * Math.PI);
+      const x = TW * 0.27 * Math.cos(a);
+      const y = TH * 0.11 * Math.sin(a);
+      const t = (-8 * Math.PI) / 180;
+      c.beginPath();
+      c.arc(cx + x * Math.cos(t) - y * Math.sin(t), TH * 0.47 + x * Math.sin(t) + y * Math.cos(t), 13, 0, Math.PI * 2);
+      c.fill();
+    });
+    ink((c) => text(c, 'ASTOR', cx + 30, TH * 0.57, '400 300px "Instrument Serif", serif', 44, 'center'));
+    foil((c) => star(c, cx - 420, TH * 0.33, 54));
+    ink((c) => text(c, 'FOTOGRAFÍA  ·  BODAS Y EVENTOS  ·  AGUASCALIENTES', cx, TH * 0.84, '600 44px "Instrument Sans Variable", sans-serif', 12, 'center'), 0.9);
+  } else {
+    // Reverso: nombre, oficio, una línea de foil y los datos en dos columnas.
+    const x = 150;
+    blind((c) => orbit(c, TW * 0.92, TH * 0.5, TW * 0.3, TH * 0.5, 9));
+    foil((c) => star(c, x + 26, 190, 34));
+    ink((c) => text(c, 'Emilio Astor', x, 420, 'italic 400 150px "Instrument Serif", serif'));
+    ink((c) => text(c, 'FOTÓGRAFO DE BODAS, XV AÑOS Y EVENTOS', x, 500, '500 32px "Instrument Sans Variable", sans-serif', 9), 0.75);
+    foil((c) => c.fillRect(x, 566, 220, 5));
+    const rows: [string, string][] = [
+      [BRAND.phone, BRAND.instagram],
+      [BRAND.email, BRAND.web],
+      ['Juan de Montoro 318', 'Zona Centro, Ags.'],
+    ];
+    rows.forEach(([a, b], i) => {
+      const y = 700 + i * 76;
+      ink((c) => text(c, a, x, y, '400 42px "Hanken Grotesk Variable", sans-serif', 1));
+      ink((c) => text(c, b, x + 860, y, '400 42px "Hanken Grotesk Variable", sans-serif', 1));
+    });
+    foil((c) => text(c, 'BODAS  ✦  XV AÑOS  ✦  EVENTOS SOCIALES', x, TH - 110, '500 30px "Instrument Sans Variable", sans-serif', 10));
+  }
+  return f;
+}
+
+function luminance(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
 }

@@ -4,7 +4,7 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import { provideRouter, withRouterConfig } from '@angular/router';
+import { provideRouter, withRouterConfig, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -12,7 +12,19 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     // El desplazamiento a fragmentos lo hace core/motion.ts con scroll suave.
-    provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
+    // Cambio de página con View Transitions: la página anterior se hunde en la noche y la nueva sube como cortina
+    // (estilos en styles.css). Con "Reducir movimiento" o al cambiar solo de fragmento se salta.
+    provideRouter(
+      routes,
+      withRouterConfig({ onSameUrlNavigation: 'reload' }),
+      withViewTransitions({
+        skipInitialTransition: true,
+        onViewTransitionCreated: ({ transition, from, to }) => {
+          const samePage = from.routeConfig === to.routeConfig;
+          if (samePage || document.documentElement.classList.contains('reduce-motion')) transition.skipTransition();
+        },
+      }),
+    ),
     provideClientHydration(withEventReplay()),
   ],
 };

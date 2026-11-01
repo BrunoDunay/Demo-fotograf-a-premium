@@ -51,7 +51,8 @@ interface Slot {
       </div>
 
       <div class="stage" (pointermove)="hover($event)" (pointerleave)="leave()" (click)="open($event)" [class.pointer]="hovered() !== null">
-        <canvas aria-hidden="true"></canvas>
+        <canvas class="film" [class.gray]="!color()" aria-hidden="true"></canvas>
+        <canvas class="lit" aria-hidden="true"></canvas>
         <div class="fade top" aria-hidden="true"></div>
         <div class="fade bottom" aria-hidden="true"></div>
         <ul class="sr">
@@ -77,7 +78,7 @@ interface Slot {
     .head { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 28px; }
     .copy { display: grid; gap: 18px; max-width: 640px; }
     .title { font-size: var(--text-2xl); }
-    .title em { color: var(--color-champagne-soft); }
+    .title em { color: var(--color-accent-soft); }
     .switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--color-line-night); }
     .switch button { position: relative; z-index: 1; min-height: 44px; padding: 0 18px; white-space: nowrap; font-family: var(--font-label); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-on-night-2); transition: color 300ms ease; }
     .switch button[aria-checked='true'] { color: var(--color-night); }
@@ -88,6 +89,10 @@ interface Slot {
     .stage { position: relative; height: clamp(520px, 86vh, 920px); margin-top: 48px; cursor: default; }
     .stage.pointer { cursor: pointer; }
     canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    /* El blanco y negro lo hace la tarjeta gráfica sobre todo el canvas (barato); el cuadro iluminado va encima, a color. */
+    .film { filter: grayscale(0) contrast(1); transition: filter 900ms var(--ease-out); }
+    .film.gray { filter: grayscale(1) contrast(1.08) brightness(0.86); }
+    .lit { pointer-events: none; }
     .fade { position: absolute; left: 0; right: 0; height: 22%; pointer-events: none; }
     .fade.top { top: 0; background: linear-gradient(var(--color-night), transparent); }
     .fade.bottom { bottom: 0; background: linear-gradient(transparent, var(--color-night)); }
@@ -108,9 +113,9 @@ export class FilmReel {
   protected readonly color = signal(false);
   protected readonly hovered = signal<number | null>(null);
   protected readonly index = signal<number | null>(null);
-  /** En celular se decodifican menos videos a la vez. */
+  /** Videos que se decodifican a la vez (se reparten en todos los cuadros): menos en celular. */
   protected readonly narrow = signal(false);
-  protected readonly active = computed(() => (this.narrow() ? this.videos.slice(0, 9) : this.videos));
+  protected readonly active = computed(() => this.videos.slice(0, this.narrow() ? 6 : 10));
   protected readonly items: ViewerItem[] = ALL_VIDEOS.map((v) => ({
     kind: 'video',
     src: videoSrc(v),
@@ -124,7 +129,6 @@ export class FilmReel {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly motion = inject(Motion);
   private slots: Slot[] = [];
-  private colorAmount = 0;
   private pointer: { x: number; y: number } | null = null;
 
   constructor() {
@@ -142,16 +146,16 @@ export class FilmReel {
 
   private start(destroyRef: DestroyRef) {
     const stage = this.host.querySelector<HTMLElement>('.stage')!;
-    const canvas = stage.querySelector('canvas')!;
+    const canvas = stage.querySelector<HTMLCanvasElement>('canvas.film')!;
+    const litCanvas = stage.querySelector<HTMLCanvasElement>('canvas.lit')!;
     const ctx = canvas.getContext('2d', { alpha: false })!;
+    const lit = litCanvas.getContext('2d')!;
     const vids = [...this.host.querySelectorAll<HTMLVideoElement>('.decoders video')];
     const posters = this.active().map((v) => {
       const img = new Image();
       img.src = videoPoster(v);
       return img;
     });
-    const canFilter = 'filter' in ctx;
-    if (!canFilter) canvas.style.filter = 'grayscale(1)';
     const reduced = prefersReducedMotion();
     const n = vids.length;
 
@@ -161,11 +165,11 @@ export class FilmReel {
     let cols = 6;
     const resize = () => {
       const r = stage.getBoundingClientRect();
-      dpr = Math.min(devicePixelRatio || 1, 1.6);
+      dpr = Math.min(devicePixelRatio || 1, 1.25);
       W = r.width;
       H = r.height;
-      canvas.width = Math.round(W * dpr);
-      canvas.height = Math.round(H * dpr);
+      canvas.width = litCanvas.width = Math.round(W * dpr);
+      canvas.height = litCanvas.height = Math.round(H * dpr);
       cols = W < 640 ? 3 : W < 1000 ? 4 : W < 1400 ? 5 : 6;
     };
     resize();
@@ -175,7 +179,8 @@ export class FilmReel {
     // Cada columna: desfase inicial, velocidad y sentido propios.
     const lanes = Array.from({ length: 8 }, (_, i) => ({
       offset: Math.random() * 1000,
-      speed: (0.018 + (i % 3) * 0.006) * (i % 2 ? -1 : 1),
+      // px por milisegundo: entre 26 y 44 px por segundo, despacio para poder ver cada clip.
+      speed: (0.026 + (i % 3) * 0.009) * (i % 2 ? -1 : 1),
     }));
     const glow = new Map<string, { a: number; t: number }>();
     let nextGlow = 0;
@@ -198,11 +203,13 @@ export class FilmReel {
       if (!visible) return;
       const dt = Math.min(50, now - last);
       last = now;
-      const targetColor = this.color() ? 1 : 0;
-      this.colorAmount += (targetColor - this.colorAmount) * Math.min(1, dt * 0.006);
-
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = '#0a0a0b';
+      lit.setTransform(dpr, 0, 0, dpr, 0, 0);
+      lit.clearRect(0, 0, W, H);
+      lit.save();
+      lit.translate(W / 2, H / 2);
+      lit.rotate(TILT);
+      ctx.fillStyle = '#070b16';
       ctx.fillRect(0, 0, W, H);
       ctx.save();
       // Película inclinada y más grande que el escenario para que nunca se vean las puntas.
@@ -214,27 +221,28 @@ export class FilmReel {
       const frameW = stripW * 0.74;
       const frameH = frameW * 0.75;
       const pitch = frameH + frameW * 0.1;
-      const boost = reduced ? 0 : Math.max(-6, Math.min(6, this.motion.velocity * 0.08));
+      // El scroll empuja un poco el rollo (suave, sin que corra).
+      const boost = reduced ? 0 : Math.min(1.2, Math.abs(this.motion.velocity) * 0.02);
       this.slots = [];
       const cos = Math.cos(TILT);
       const sin = Math.sin(TILT);
 
       for (let c = 0; c < cols; c++) {
         const lane = lanes[c];
-        if (!reduced) lane.offset += (lane.speed + Math.sign(lane.speed) * Math.abs(boost) * 0.02) * dt * 10;
+        if (!reduced) lane.offset += lane.speed * (1 + boost) * dt;
         const cx = -span / 2 + laneW * (c + 0.5);
         const x0 = cx - stripW / 2;
         const top = -H * 0.75;
         const bottom = H * 0.75;
         // Base de la película.
-        ctx.fillStyle = '#121212';
+        ctx.fillStyle = '#10131b';
         ctx.fillRect(x0, top, stripW, bottom - top);
         // Perforaciones a los lados.
         const holeW = stripW * 0.06;
         const holeH = holeW * 1.3;
         const holePitch = holeH * 2.1;
         const holeOff = ((lane.offset % holePitch) + holePitch) % holePitch;
-        ctx.fillStyle = '#2b2a28';
+        ctx.fillStyle = '#272b36';
         for (let y = top - holePitch + holeOff; y < bottom; y += holePitch) {
           ctx.fillRect(x0 + stripW * 0.035, y, holeW, holeH);
           ctx.fillRect(x0 + stripW - stripW * 0.035 - holeW, y, holeW, holeH);
@@ -257,36 +265,25 @@ export class FilmReel {
           if (isHover && this.hovered() !== idx) this.hovered.set(idx);
           const g = glow.get(key);
           const light = Math.max(isHover ? 1 : 0, g ? g.a : 0);
-          if (light > 0.01) {
-            // Halo de mesa de luz detrás del cuadro.
-            ctx.save();
-            ctx.globalCompositeOperation = 'lighter';
-            const grad = ctx.createRadialGradient(cx, y + frameH / 2, frameW * 0.2, cx, y + frameH / 2, frameW * 0.95);
-            grad.addColorStop(0, `rgba(255,248,235,${0.32 * light})`);
-            grad.addColorStop(1, 'rgba(255,248,235,0)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(cx - frameW, y - frameH * 0.5, frameW * 2, frameH * 2);
-            ctx.restore();
-          }
-          if (src) {
-            const colorHere = isHover ? 1 : this.colorAmount;
-            if (canFilter && colorHere < 0.999) {
-              ctx.filter = `grayscale(1) contrast(1.08) brightness(${(0.82 + light * 0.25).toFixed(2)})`;
-              ctx.drawImage(src, fx, y, frameW, frameH);
-              ctx.filter = 'none';
-            }
-            if (colorHere > 0.001 || !canFilter) {
-              ctx.globalAlpha = canFilter ? colorHere : 1;
-              ctx.drawImage(src, fx, y, frameW, frameH);
-              ctx.globalAlpha = 1;
-            }
-          } else {
-            ctx.fillStyle = '#1d1d1d';
+          if (src) ctx.drawImage(src, fx, y, frameW, frameH);
+          else {
+            ctx.fillStyle = '#1b1f2a';
             ctx.fillRect(fx, y, frameW, frameH);
+          }
+          if (light > 0.01 && src) {
+            // Mesa de luz: halo detrás y el cuadro a color encima (en la capa sin filtro).
+            const grad = lit.createRadialGradient(cx, y + frameH / 2, frameW * 0.2, cx, y + frameH / 2, frameW * 0.95);
+            grad.addColorStop(0, `rgba(255,246,240,${0.26 * light})`);
+            grad.addColorStop(1, 'rgba(255,246,240,0)');
+            lit.fillStyle = grad;
+            lit.fillRect(cx - frameW, y - frameH * 0.5, frameW * 2, frameH * 2);
+            lit.globalAlpha = light;
+            lit.drawImage(src, fx, y, frameW, frameH);
+            lit.globalAlpha = 1;
           }
           // Número de cuadro y marca de la película en el borde.
           ctx.fillStyle = 'rgba(236,174,92,0.75)';
-          ctx.font = `500 ${Math.max(8, stripW * 0.035)}px "Oswald Variable", sans-serif`;
+          ctx.font = `500 ${Math.max(8, stripW * 0.035)}px "Instrument Sans Variable", sans-serif`;
           ctx.fillText(`${((k - firstK) * 3 + c * 7 + 400) % 36 || 36}A`, fx, y - stripW * 0.02);
           if ((k - firstK + c) % 4 === 0) {
             ctx.fillStyle = 'rgba(236,232,225,0.35)';
@@ -295,6 +292,7 @@ export class FilmReel {
         }
       }
       ctx.restore();
+      lit.restore();
 
       // Cada tanto se ilumina un cuadro al azar, como en la mesa de luz de la referencia.
       if (now > nextGlow && !reduced) {

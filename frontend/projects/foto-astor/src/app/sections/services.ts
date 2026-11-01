@@ -49,7 +49,7 @@ import { Reveal } from '../shared/reveal';
               <div class="body">
                 <h3 class="name">
                   {{ s.title }}
-                  <span class="script">{{ s.script }}</span>
+                  <em class="sub">{{ s.script }}</em>
                 </h3>
                 <p class="text">{{ s.text }}</p>
                 <ul class="tags">
@@ -72,7 +72,7 @@ import { Reveal } from '../shared/reveal';
     .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); grid-template-areas: 'head head' 'fan list'; column-gap: clamp(32px, 6vw, 96px); row-gap: 56px; align-items: center; }
     .head { grid-area: head; display: grid; gap: 18px; max-width: 760px; }
     .title { font-size: var(--text-2xl); }
-    .title em { color: var(--color-champagne); }
+    .title em { color: var(--color-accent); }
 
     .fan { grid-area: fan; position: sticky; top: 110px; align-self: start; height: clamp(360px, 40vw, 520px); }
     .fan-deco { position: absolute; left: 50%; top: 40%; --size: clamp(220px, 28vw, 360px); translate: -50% -50%; opacity: 0.12; }
@@ -99,9 +99,9 @@ import { Reveal } from '../shared/reveal';
     .row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 18px; padding-block: 34px; border-bottom: 1px solid var(--color-line); cursor: default; }
     .n { color: var(--color-muted); padding-top: 14px; }
     .name { font-size: clamp(2.2rem, 4.4vw, 3.6rem); font-style: italic; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 18px; transition: translate 600ms var(--ease-out); }
-    .name .script { font-style: normal; font-size: 0.72em; color: var(--color-champagne); opacity: 0.5; transition: opacity 400ms ease; }
+    .name .sub { font-size: 0.6em; color: var(--color-accent); opacity: 0.5; transition: opacity 400ms ease; }
     .row.on .name { translate: 10px 0; }
-    .row.on .name .script { opacity: 1; }
+    .row.on .name .sub { opacity: 1; }
     .text { margin-top: 12px; max-width: 46ch; color: var(--color-ink-2); }
     .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
     .tags li { padding: 5px 12px; border-radius: var(--radius-pill); box-shadow: inset 0 0 0 1px var(--color-line-2); font-family: var(--font-label); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-ink-2); }

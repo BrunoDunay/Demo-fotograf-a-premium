@@ -53,10 +53,9 @@
 .title .accent {
   display: block;
   margin-top: 0.1em;
-  margin-left: 0.6em;
-  font-size: 1.08em;
-  color: var(--color-champagne);
-  line-height: 0.9;
+  margin-left: 0.9em;
+  color: var(--color-accent);
+  line-height: 0.95;
 }
 
 .intro-text {
@@ -201,7 +200,7 @@ figcaption {
 }
 
 .card:focus-visible .face {
-  outline: 2px solid var(--color-champagne);
+  outline: 2px solid var(--color-accent);
   outline-offset: 4px;
 }
 
@@ -324,7 +323,7 @@ figcaption {
   position: absolute;
   inset: 0;
   opacity: 0;
-  background: radial-gradient(90% 90% at 50% 45%, rgb(239 236 230 / 80%), rgb(222 217 208 / 96%));
+  background: radial-gradient(90% 90% at 50% 45%, rgb(233 235 239 / 80%), rgb(210 216 226 / 96%));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -409,7 +408,7 @@ figcaption {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgb(23 22 20 / 8%);
+  background: rgb(20 27 45 / 8%);
   transition:
     background-color 200ms ease,
     scale 160ms var(--ease-out);
@@ -421,7 +420,7 @@ figcaption {
 
 @media (hover: hover) and (pointer: fine) {
   .zoom-close:hover {
-    background: rgb(23 22 20 / 16%);
+    background: rgb(20 27 45 / 16%);
   }
 }
 

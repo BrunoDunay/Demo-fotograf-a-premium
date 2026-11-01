@@ -30,9 +30,9 @@ import { Reveal } from '../shared/reveal';
             <li class="muted"><app-icon name="calendar" [size]="18" /><span>{{ brand.hours }} · estudio con cita</span></li>
           </ul>
           <div class="ctas">
-            <button type="button" class="btn btn-ink" (click)="vcard()"><app-icon name="download" [size]="16" /> Guardar contacto</button>
+            <button type="button" class="btn btn-ink" (click)="vcard()"><app-icon name="download" [size]="16" /> <span class="btn-t">Guardar contacto</span></button>
             <button type="button" class="btn btn-line" (click)="copy()">
-              <app-icon [name]="copied() ? 'check' : 'copy'" [size]="16" /> {{ copied() ? 'Correo copiado' : 'Copiar correo' }}
+              <app-icon [name]="copied() ? 'check' : 'copy'" [size]="16" /> <span class="btn-t">{{ copied() ? 'Correo copiado' : 'Copiar correo' }}</span>
             </button>
           </div>
         </div>
@@ -62,17 +62,17 @@ import { Reveal } from '../shared/reveal';
     .grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 80px); align-items: center; }
     .copy { display: grid; gap: 20px; }
     .title { font-size: var(--text-3xl); }
-    .title em { color: var(--color-champagne); }
+    .title em { color: var(--color-accent); }
     .info { display: grid; gap: 12px; margin-top: 6px; }
     .info li { display: flex; align-items: center; gap: 12px; font-size: 1.02rem; }
-    .info app-icon { color: var(--color-champagne); }
+    .info app-icon { color: var(--color-accent); }
     .info .muted { color: var(--color-muted); font-size: 0.92rem; }
     .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
 
     .book { background: linear-gradient(var(--color-paper), var(--color-paper-2)); scroll-margin-top: 70px; }
     .head { position: relative; display: grid; gap: 14px; margin-bottom: 56px; }
     .title-2 { font-size: var(--text-2xl); }
-    .title-2 em { color: var(--color-champagne); }
+    .title-2 em { color: var(--color-accent); }
     .deco { position: absolute; right: 4%; top: -30px; --size: 90px; opacity: 0.3; }
     .book-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 80px); align-items: start; }
     .form-wrap { scroll-margin-top: 90px; }

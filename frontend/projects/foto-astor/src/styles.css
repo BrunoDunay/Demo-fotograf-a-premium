@@ -1,40 +1,41 @@
 /* Astor · Fotografía de bodas y eventos sociales (demo Premium).
-   Papel de algodón, tinta, plata y una sola nota cálida (champán). La galería y el rollo viven en la noche. */
-@import '@fontsource-variable/bodoni-moda/opsz.css';
-@import '@fontsource-variable/bodoni-moda/opsz-italic.css';
-@import '@fontsource-variable/oswald/wght.css';
+   Porcelana fría, azul medianoche y un solo acento: palo de rosa. La galería y el rollo viven en la noche. */
+@import '@fontsource/instrument-serif/latin-400.css';
+@import '@fontsource/instrument-serif/latin-400-italic.css';
+@import '@fontsource-variable/instrument-sans/wdth.css';
 @import '@fontsource-variable/hanken-grotesk/wght.css';
 @import '@fontsource/mrs-saint-delafield/latin-400.css';
 
 :root {
   /* Color */
-  --color-paper: #efece6;
-  --color-paper-2: #e5e1d9;
-  --color-paper-3: #d9d4ca;
-  --color-card: #f8f6f1;
-  --color-ink: #171614;
-  --color-ink-2: #3b3935;
-  --color-muted: #77726a;
-  --color-line: rgb(23 22 20 / 13%);
-  --color-line-2: rgb(23 22 20 / 24%);
-  --color-night: #0a0a0b;
-  --color-night-2: #141415;
-  --color-night-3: #1d1d1f;
-  --color-on-night: #ece8e1;
-  --color-on-night-2: rgb(236 232 225 / 62%);
-  --color-line-night: rgb(236 232 225 / 14%);
-  --color-champagne: #a98b66;
-  --color-champagne-soft: #cdb592;
-  --color-silver-1: #8d8b86;
-  --color-silver-2: #e9e7e2;
+  --color-paper: #e9ebef;
+  --color-paper-2: #dde1e8;
+  --color-paper-3: #ccd2dc;
+  --color-card: #f7f8fa;
+  --color-ink: #141b2d;
+  --color-ink-2: #353e55;
+  --color-muted: #646d84;
+  --color-line: rgb(20 27 45 / 13%);
+  --color-line-2: rgb(20 27 45 / 24%);
+  --color-night: #070b16;
+  --color-night-2: #0e1424;
+  --color-night-3: #172036;
+  --color-on-night: #e9ecf3;
+  --color-on-night-2: rgb(233 236 243 / 64%);
+  --color-line-night: rgb(233 236 243 / 14%);
+  --color-accent: #a4514f;
+  --color-accent-soft: #e2a7a0;
+  --color-accent-wash: #f3dcd8;
+  --color-silver-1: #8a90a0;
+  --color-silver-2: #e6e9ef;
   --color-whatsapp: #1f7a4d;
   --color-danger: #9b3b2f;
-  --color-tape: rgb(214 201 178 / 78%);
+  --color-tape: rgb(226 214 214 / 74%);
 
   /* Tipografía */
-  --font-display: 'Bodoni Moda Variable', 'Bodoni 72', Didot, Georgia, serif;
+  --font-display: 'Instrument Serif', 'Times New Roman', Georgia, serif;
   --font-script: 'Mrs Saint Delafield', 'Snell Roundhand', cursive;
-  --font-label: 'Oswald Variable', 'Arial Narrow', sans-serif;
+  --font-label: 'Instrument Sans Variable', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --text-xs: 0.72rem;
   --text-sm: 0.86rem;
@@ -64,8 +65,8 @@
   --radius-2: 8px;
   --radius-3: 16px;
   --radius-pill: 999px;
-  --shadow-paper: 0 1px 1px rgb(30 24 16 / 8%), 0 6px 14px -6px rgb(30 24 16 / 22%), 0 22px 40px -24px rgb(30 24 16 / 30%);
-  --shadow-lift: 0 2px 3px rgb(30 24 16 / 10%), 0 18px 30px -10px rgb(30 24 16 / 32%), 0 50px 80px -40px rgb(30 24 16 / 45%);
+  --shadow-paper: 0 1px 1px rgb(10 16 34 / 8%), 0 6px 14px -6px rgb(10 16 34 / 22%), 0 22px 40px -24px rgb(10 16 34 / 30%);
+  --shadow-lift: 0 2px 3px rgb(10 16 34 / 10%), 0 18px 30px -10px rgb(10 16 34 / 32%), 0 50px 80px -40px rgb(10 16 34 / 45%);
   --shadow-night: 0 30px 80px -30px rgb(0 0 0 / 80%);
 
   /* Movimiento */
@@ -122,6 +123,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Grano de papel muy suave sobre todo el sitio claro (no en la galería: ahí se vería como polvo). */
+html:has(app-gallery) body::after {
+  display: none;
 }
 
 /* Grano de papel muy suave sobre todo el sitio claro. */
@@ -202,9 +208,8 @@ h3,
 h4 {
   font-family: var(--font-display);
   font-weight: 400;
-  line-height: 1.02;
-  letter-spacing: -0.01em;
-  font-variation-settings: 'opsz' 96;
+  line-height: 0.98;
+  letter-spacing: -0.015em;
   text-wrap: balance;
 }
 
@@ -222,7 +227,7 @@ em {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-champagne);
+  outline: 2px solid var(--color-accent);
   outline-offset: 3px;
   border-radius: 2px;
 }
@@ -306,8 +311,18 @@ html.grabbing * {
   color: var(--color-on-night-2);
 }
 
-/* ===== Botones ===== */
+/* ===== Botones =====
+   Cada botón reacciona distinto, pero todos comparten tres cosas en escritorio:
+   - el texto rueda (sale por arriba y entra el mismo desde abajo: .btn-t, lo agrega Motion);
+   - el color nuevo nace desde el punto por donde entró el cursor (--mx, --my);
+   - el botón se deja jalar un poco por el cursor (--tx, --ty). */
 .btn {
+  --mx: 50%;
+  --my: 50%;
+  --tx: 0px;
+  --ty: 0px;
+  --fill: var(--color-accent);
+  --on-fill: #fff;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -317,22 +332,61 @@ html.grabbing * {
   padding: 0 26px;
   border-radius: var(--radius-pill);
   font-family: var(--font-label);
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.2em;
+  font-size: 0.76rem;
+  font-weight: 560;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   isolation: isolate;
+  translate: var(--tx) var(--ty);
   transition:
+    translate 500ms var(--ease-out),
     scale 160ms var(--ease-out),
     background-color 300ms ease,
-    color 300ms ease,
-    box-shadow 300ms ease;
+    color 450ms var(--ease-out),
+    box-shadow 400ms ease;
+}
+
+/* Relleno circular que crece desde el cursor. */
+.btn::before {
+  content: '';
+  position: absolute;
+  left: var(--mx);
+  top: var(--my);
+  z-index: -1;
+  width: 260%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--fill);
+  translate: -50% -50%;
+  scale: 0;
+  transition: scale 650ms var(--ease-out);
+  pointer-events: none;
 }
 
 .btn:active {
   scale: 0.96;
+}
+
+.btn-t {
+  display: inline-block;
+  text-shadow: 0 3.4em currentColor;
+  transition: translate 620ms var(--ease-out);
+}
+
+.btn > app-icon,
+.btn > .star {
+  transition:
+    translate 500ms var(--ease-out),
+    rotate 700ms var(--ease-out),
+    scale 500ms var(--ease-spring);
+}
+
+.btn .star {
+  width: 12px;
+  height: 12px;
+  flex: none;
 }
 
 .btn-ink {
@@ -340,58 +394,91 @@ html.grabbing * {
   color: var(--color-paper);
 }
 
-/* Destello: una franja de luz cruza el botón al pasar el cursor. */
-.btn-ink::after,
-.btn-light::after {
-  content: '';
-  position: absolute;
-  inset: -2px auto -2px 0;
-  width: 46%;
-  z-index: -1;
-  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 22%), transparent);
-  transform: translateX(-120%) skewX(-16deg);
-}
-
 .btn-line {
+  --fill: var(--color-ink);
+  --on-fill: var(--color-paper);
   box-shadow: inset 0 0 0 1px var(--color-line-2);
   color: var(--color-ink);
 }
 
 .btn-light {
+  --fill: var(--color-accent-soft);
+  --on-fill: var(--color-night);
   background: var(--color-on-night);
   color: var(--color-night);
 }
 
 .btn-line-light {
-  box-shadow: inset 0 0 0 1px rgb(236 232 225 / 32%);
+  --fill: var(--color-on-night);
+  --on-fill: var(--color-night);
+  box-shadow: inset 0 0 0 1px rgb(233 236 243 / 32%);
   color: var(--color-on-night);
 }
 
-.btn .star {
-  width: 12px;
-  height: 12px;
-  flex: none;
-  transition: rotate 600ms var(--ease-out);
+/* Acento: la acción principal (apartar fecha). Respira con un halo y su estrella titila. */
+.btn-accent {
+  --fill: var(--color-ink);
+  --on-fill: var(--color-paper);
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 10px 26px -12px rgb(164 81 79 / 80%);
+}
+
+.btn-accent::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 34%) 48%, transparent 64%) -150% 0 / 250% 100% no-repeat;
+  animation: btn-sheen 4.8s var(--ease-in-out) infinite;
+}
+
+@keyframes btn-sheen {
+  0%,
+  62% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -150% 0;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .btn-ink:hover::after,
-  .btn-light:hover::after {
-    transform: translateX(320%) skewX(-16deg);
-    transition: transform 900ms var(--ease-out);
+  .btn:hover::before {
+    scale: 1;
   }
-  .btn-line:hover {
-    box-shadow: inset 0 0 0 1px var(--color-ink);
+  .btn:hover {
+    color: var(--on-fill);
   }
+  .btn-ink:hover {
+    box-shadow: 0 14px 30px -14px rgb(164 81 79 / 90%);
+  }
+  .btn-line:hover,
   .btn-line-light:hover {
-    box-shadow: inset 0 0 0 1px var(--color-on-night);
+    box-shadow: inset 0 0 0 1px transparent;
   }
-  .btn:hover .star {
-    rotate: 90deg;
+  .btn-accent:hover {
+    box-shadow: 0 16px 34px -14px rgb(20 27 45 / 60%);
+  }
+  .btn:hover .btn-t {
+    translate: 0 -3.4em;
+  }
+  .btn:hover > .star {
+    rotate: 180deg;
+    scale: 1.35;
+  }
+  .btn:hover > app-icon {
+    translate: 4px 0;
+  }
+  .btn:hover > app-icon:first-child {
+    translate: 0 0;
+    rotate: -12deg;
+    scale: 1.15;
   }
 }
 
-/* Enlace con subrayado que se dibuja. */
+/* Enlace con subrayado: al pasar el cursor la línea se va por la derecha y se vuelve a dibujar desde la izquierda. */
 .link {
   position: relative;
   display: inline-flex;
@@ -399,13 +486,37 @@ html.grabbing * {
   gap: 8px;
   padding-block: 6px;
   background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat;
-  transition: background-size 500ms var(--ease-out);
+}
+
+.link > app-icon {
+  transition: translate 500ms var(--ease-out), rotate 500ms var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .link:hover {
+    animation: link-redraw 900ms var(--ease-out);
+  }
+  .link:hover > app-icon {
+    translate: 5px 0;
+  }
+}
+
+@keyframes link-redraw {
+  0% {
+    background-size: 100% 1px;
+    background-position: 100% 100%;
+  }
+  45% {
     background-size: 0 1px;
     background-position: 100% 100%;
+  }
+  46% {
+    background-size: 0 1px;
+    background-position: 0 100%;
+  }
+  100% {
+    background-size: 100% 1px;
+    background-position: 0 100%;
   }
 }
 
@@ -423,7 +534,7 @@ html.grabbing * {
   pointer-events: none;
   opacity: 0.35;
   mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.43 0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.46 0 0 0 0 0.55 0 0 0 0.28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
 }
 
 .tape {
@@ -432,6 +543,29 @@ html.grabbing * {
   background: var(--color-tape);
   box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
   mask: linear-gradient(90deg, transparent, #000 4px calc(100% - 4px), transparent);
+}
+
+/* ===== Pegado con cinta: se despega, se mueve y se vuelve a pegar (directiva appStick) ===== */
+.stick {
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition:
+    scale 300ms var(--ease-out),
+    box-shadow 300ms ease,
+    rotate 400ms var(--ease-out);
+}
+
+.stick.lifted {
+  z-index: 30 !important;
+  scale: 1.06;
+  cursor: grabbing;
+  box-shadow: 0 30px 60px -20px rgb(10 16 34 / 55%);
+}
+
+.stick.pressed {
+  scale: 0.985;
 }
 
 /* ===== Revelado al hacer scroll ([data-reveal]) ===== */
@@ -459,6 +593,44 @@ html.grabbing * {
   opacity: 1;
   translate: 0 0;
   scale: 1;
+}
+
+/* ===== Cambio de página (View Transitions) =====
+   La página anterior se hunde y se apaga sobre la noche; la nueva sube como una cortina. El encabezado se queda. */
+::view-transition {
+  background: var(--color-night);
+}
+
+::view-transition-old(root) {
+  animation: page-out 640ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  transform-origin: 50% 0;
+}
+
+::view-transition-new(root) {
+  animation: page-in 1000ms cubic-bezier(0.32, 0.72, 0, 1) 140ms both;
+}
+
+::view-transition-group(site-header) {
+  animation-duration: 600ms;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0.25;
+    transform: translateY(-5vh) scale(0.94);
+    filter: blur(3px);
+  }
+}
+
+@keyframes page-in {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: translateY(14vh);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
 }
 
 /* Interruptor "Reducir movimiento": quita transiciones largas y animaciones decorativas. */

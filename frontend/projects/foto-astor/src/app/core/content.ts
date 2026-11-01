@@ -17,16 +17,25 @@ export const BRAND = {
 };
 
 /** Lugares y planners con los que "ha trabajado" (nombres inventados). La fuente varía como en un muro de logos. */
-export const VENUES: { name: string; kind: string; style: 'serif' | 'italic' | 'script' | 'caps' | 'condensed' }[] = [
-  { name: 'Hacienda Los Arcos', kind: 'Recepciones', style: 'caps' },
-  { name: 'Viñedo Cielo Rojo', kind: 'Bodas en viñedo', style: 'italic' },
-  { name: 'Casona Tres Lunas', kind: 'Eventos', style: 'serif' },
-  { name: 'Bugambilia', kind: 'Wedding planner', style: 'script' },
-  { name: 'Jardín El Mezquite', kind: 'Jardín de eventos', style: 'condensed' },
+export type VenueLogo = 'arches' | 'vine' | 'moons' | 'flower' | 'tree' | 'monogram' | 'flame';
+export const VENUES: {
+  name: string;
+  kind: string;
+  style: 'serif' | 'italic' | 'script' | 'caps' | 'condensed';
+  /** Logotipo propio (los que no tienen se muestran solo con su tipografía). */
+  logo?: VenueLogo;
+  /** Cómo se acomoda el logo: arriba del nombre, a un lado, o sello circular. */
+  layout?: 'stack' | 'inline' | 'seal';
+}[] = [
+  { name: 'Hacienda Los Arcos', kind: 'Recepciones', style: 'caps', logo: 'arches', layout: 'stack' },
+  { name: 'Viñedo Cielo Rojo', kind: 'Bodas en viñedo', style: 'italic', logo: 'vine', layout: 'inline' },
+  { name: 'Casona Tres Lunas', kind: 'Eventos', style: 'serif', logo: 'moons', layout: 'stack' },
+  { name: 'Bugambilia', kind: 'Wedding planner', style: 'script', logo: 'flower', layout: 'inline' },
+  { name: 'Jardín El Mezquite', kind: 'Jardín de eventos', style: 'condensed', logo: 'tree', layout: 'seal' },
   { name: 'Salón Cristal', kind: 'Salón', style: 'caps' },
   { name: 'Flor de Sal', kind: 'Floristería', style: 'italic' },
-  { name: 'Quinta Alameda', kind: 'Quinta', style: 'serif' },
-  { name: 'Velaria', kind: 'Ambientación', style: 'script' },
+  { name: 'Quinta Alameda', kind: 'Quinta', style: 'serif', logo: 'monogram', layout: 'inline' },
+  { name: 'Velaria', kind: 'Ambientación', style: 'script', logo: 'flame', layout: 'inline' },
   { name: 'Terraza Mirador', kind: 'Terraza', style: 'condensed' },
 ];
 
