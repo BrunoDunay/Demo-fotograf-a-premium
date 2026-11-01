@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npx ng build foto-astor",
+  "outputDirectory": "dist/foto-astor/browser",
   "trailingSlash": false,
   "rewrites": [{ "source": "/((?!media/).*)", "destination": "/index.csr.html" }],
   "headers": [
