@@ -94,21 +94,15 @@ export class Motion {
 
   /**
    * Botones vivos (el texto que rueda va en <span class="btn-t"> en cada plantilla). Con mouse, el relleno nace
-   * donde entró el cursor, se retira por donde salió y el botón se deja jalar un poco (magnético).
+   * donde entró el cursor, se retira por donde salió.
    */
   private enhanceButtons() {
     if (!hasFinePointer()) return;
     let active: HTMLElement | null = null;
-    const place = (btn: HTMLElement, e: PointerEvent, pull: boolean) => {
+    const place = (btn: HTMLElement, e: PointerEvent) => {
       const r = btn.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const y = e.clientY - r.top;
-      btn.style.setProperty('--mx', `${x}px`);
-      btn.style.setProperty('--my', `${y}px`);
-      if (pull && !prefersReducedMotion()) {
-        btn.style.setProperty('--tx', `${((x - r.width / 2) * 0.18).toFixed(1)}px`);
-        btn.style.setProperty('--ty', `${((y - r.height / 2) * 0.3).toFixed(1)}px`);
-      }
+      btn.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      btn.style.setProperty('--my', `${e.clientY - r.top}px`);
     };
     document.addEventListener(
       'pointerover',
@@ -117,12 +111,11 @@ export class Motion {
         if (btn === active) return;
         if (active) this.releaseButton(active, e);
         active = btn;
-        if (btn) place(btn, e, false);
+        if (btn) place(btn, e);
       },
       { passive: true },
     );
-    document.addEventListener('pointermove', (e) => active && place(active, e, true), { passive: true });
-    document.addEventListener(
+        document.addEventListener(
       'pointerout',
       (e) => {
         if (!active) return;
@@ -140,8 +133,6 @@ export class Motion {
     const r = btn.getBoundingClientRect();
     btn.style.setProperty('--mx', `${e.clientX - r.left}px`);
     btn.style.setProperty('--my', `${e.clientY - r.top}px`);
-    btn.style.setProperty('--tx', '0px');
-    btn.style.setProperty('--ty', '0px');
   }
 
   // Los enlaces "#seccion" se desplazan con Lenis en lugar del salto nativo.

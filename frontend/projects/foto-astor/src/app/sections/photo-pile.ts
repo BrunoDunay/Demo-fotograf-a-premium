@@ -69,7 +69,7 @@ function seededLayout(i: number) {
 }
 
 /**
- * Portada: una mesa con un montón de fotos instantáneas. Se arrastran (mantener presionado o mover),
+ * Portada: una mesa con un montón de copias impresas (de cuarto oscuro). Se arrastran (mantener presionado o mover),
  * se lanzan fuera de la mesa si se sueltan con fuerza y, con un toque corto, la foto "se acerca" a la cámara
  * en 3D. Al quedarse sin fotos aparece "Soltar más fotos": caen nuevas al azar hasta el límite de la mesa.
  */
@@ -161,7 +161,7 @@ export class PhotoPile {
     this.H = r.height;
     const narrow = this.W < 760;
     this.cw = narrow ? Math.min(178, this.W * 0.44) : Math.max(200, Math.min(280, this.W * 0.17));
-    this.ch = this.cw * 1.24;
+    this.ch = this.cw * 1.2;
     this.table.style.setProperty('--cw', `${this.cw}px`);
   }
 

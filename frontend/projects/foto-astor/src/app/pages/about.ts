@@ -14,7 +14,7 @@ const ROWS = 5;
 
 /**
  * Sobre mí: el retrato de Emilio partido en mosaicos (como la referencia del fotógrafo en cuadros) con notas
- * adhesivas, y su historia en hojas sujetas con clips, una foto instantánea y cifras.
+ * adhesivas, y su historia en hojas sujetas con clips, una copia impresa y cifras.
  */
 @Component({
   selector: 'app-about',
@@ -94,11 +94,11 @@ const ROWS = 5;
               baño de mi casa. Viajo con una cámara de película y casi nunca la saco. Me gusta el café sin azúcar y las
               canciones de Juan Gabriel a las dos de la mañana.
             </p>
-            <figure class="polaroid" appStick style="--rot: -6deg">
-              <span class="tape" aria-hidden="true"></span>
-              <span class="peel label" aria-hidden="true">Despégala y muévela</span>
-              <img [src]="src('emilio-camara')" alt="Emilio tomando una foto con luz de ventana" loading="lazy" draggable="false" />
-              <figcaption class="script">el estudio, 2024</figcaption>
+            <figure class="print-card" appStick style="--rot: -6deg">
+              <span class="corners" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+              <span class="peel label" aria-hidden="true">Sácala y muévela</span>
+              <span class="ph"><img [src]="src('emilio-camara')" alt="Emilio tomando una foto con luz de ventana" loading="lazy" draggable="false" /></span>
+              <figcaption><span class="label">El estudio · 2024</span><svg class="stamp" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg></figcaption>
             </figure>
           </article>
 
@@ -145,7 +145,10 @@ const ROWS = 5;
           <app-binder-clip class="clip big" />
           @for (p of collage; track p.name; let i = $index) {
             <figure class="pol" appStick [style.--rot]="p.rot + 'deg'" [style.left.%]="p.x" [style.top.%]="p.y" [style.--w]="p.w + '%'" [style.z-index]="i + 1">
-              <img [src]="src(p.name)" [alt]="alt(p.name)" loading="lazy" draggable="false" />
+              @if (i % 2 === 0) {
+                <span class="corners" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+              }
+              <span class="ph"><img [src]="src(p.name)" [alt]="alt(p.name)" loading="lazy" draggable="false" /></span>
             </figure>
           }
         </div>
@@ -220,14 +223,27 @@ const ROWS = 5;
     .sub { margin-bottom: 18px; color: inherit; opacity: 0.75; }
     .body { font-family: var(--font-label); font-size: 0.98rem; font-weight: 400; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.6; }
     .body + .body { margin-top: 14px; }
-    /* La instantánea queda en una esquina libre (abajo, fuera del texto) y se puede despegar y mover. */
+    /* La copia queda en una esquina libre (abajo, fuera del texto), sujeta con esquineros de álbum; se puede sacar y mover. */
     .sheet.has-photo { padding-bottom: clamp(150px, 16vw, 210px); }
-    .polaroid .tape { left: 50%; top: -14px; width: 86px; translate: -50% 0; rotate: 4deg; }
     .peel { position: absolute; left: 50%; top: -40px; translate: -50% 0; white-space: nowrap; font-size: 0.56rem; color: var(--color-muted); opacity: 0; transition: opacity 300ms ease; pointer-events: none; }
-    .polaroid:hover .peel { opacity: 1; }
-    .polaroid { position: absolute; right: -26px; bottom: -90px; width: 40%; padding: 7px 7px 34px; background: #fff; box-shadow: var(--shadow-lift); rotate: var(--rot); }
-    .polaroid img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-    .polaroid figcaption { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 1.4rem; color: #333; }
+    .print-card:hover .peel { opacity: 1; }
+    .print-card { position: absolute; right: -26px; bottom: -90px; width: 40%; padding: 9px 9px 0; rotate: var(--rot); }
+    .print-card figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 34px; color: rgb(36 33 28 / 60%); font-size: 0.56rem; }
+    .print-card .stamp { width: 17px; height: 17px; }
+
+    /* Copias de cuarto oscuro (no instantáneas): papel de fibra con margen parejo, filo negro del portanegativos,
+       sello de la estrella en seco y esquineros de álbum en lugar de cinta. */
+    .print-card, .pol { background: radial-gradient(120% 90% at 30% 10%, #f7f4ee, #ebe5d8); box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 8%), var(--shadow-lift); border-radius: 1px; }
+    .ph { position: relative; display: block; overflow: hidden; border-radius: 1px; box-shadow: 0 0 0 2.5px #14110d, 0 0 0 3.5px rgb(20 17 13 / 30%); }
+    .ph::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 14px rgb(0 0 0 / 28%); pointer-events: none; }
+    .ph img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+    .stamp { color: #ece7dc; filter: drop-shadow(-0.7px -0.7px 0 rgb(255 255 255 / 95%)) drop-shadow(0.8px 0.9px 0.5px rgb(60 48 30 / 35%)); }
+    .corners i { position: absolute; z-index: 2; width: 26px; height: 26px; pointer-events: none; background: linear-gradient(135deg, #8f4543 0 50%, transparent 50%); filter: drop-shadow(1px 2px 1.5px rgb(10 16 34 / 40%)); }
+    .corners i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 46%, rgb(255 255 255 / 18%) 47% 50%, transparent 51%); }
+    .corners i:nth-child(1) { left: -5px; top: -5px; }
+    .corners i:nth-child(2) { right: -5px; top: -5px; rotate: 90deg; }
+    .corners i:nth-child(3) { right: -5px; bottom: -5px; rotate: 180deg; }
+    .corners i:nth-child(4) { left: -5px; bottom: -5px; rotate: 270deg; }
 
     .numbers { padding-block: 72px; }
     .nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
@@ -243,8 +259,9 @@ const ROWS = 5;
     .board { position: absolute; inset: 8% 6% 4% 10%; background: #f7f5f0; box-shadow: var(--shadow-paper); rotate: -2deg; }
     .board::after { content: ''; position: absolute; inset: 4% -5% -5% 6%; z-index: -1; background: #1a2133; rotate: 3deg; }
     .clip.big { left: 12%; top: 0; --clip-w: 82px; }
-    .pol { position: absolute; width: var(--w); padding: 6px 6px 22px; background: #fff; box-shadow: var(--shadow-lift); rotate: var(--rot); transition: rotate 500ms var(--ease-out), scale 500ms var(--ease-out), box-shadow 300ms ease; }
-    .pol img { width: 100%; aspect-ratio: 4 / 4.4; object-fit: cover; }
+    .pol { position: absolute; width: var(--w); padding: 8px; rotate: var(--rot); transition: rotate 500ms var(--ease-out), scale 500ms var(--ease-out), box-shadow 300ms ease; }
+    .pol .ph img { aspect-ratio: 4 / 4.6; }
+    .pol .corners i { width: 20px; height: 20px; }
     @media (hover: hover) and (pointer: fine) {
       .pol:hover { rotate: 0deg; scale: 1.06; z-index: 10 !important; }
     }
@@ -261,7 +278,7 @@ const ROWS = 5;
       .mosaic { order: -1; max-width: 420px; }
       .sheets { grid-template-columns: 1fr; gap: 80px; }
       .sheet.tilt, .sheet.ink { margin-top: 0; }
-      .polaroid { right: -8px; bottom: -80px; width: 46%; }
+      .print-card { right: -8px; bottom: -80px; width: 46%; }
       .nums { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 40px; }
     }
   `,

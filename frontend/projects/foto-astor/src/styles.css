@@ -312,15 +312,12 @@ html.grabbing * {
 }
 
 /* ===== Botones =====
-   Cada botón reacciona distinto, pero todos comparten tres cosas en escritorio:
+   Cada botón reacciona distinto, pero todos comparten dos cosas en escritorio:
    - el texto rueda (sale por arriba y entra el mismo desde abajo: .btn-t, lo agrega Motion);
-   - el color nuevo nace desde el punto por donde entró el cursor (--mx, --my);
-   - el botón se deja jalar un poco por el cursor (--tx, --ty). */
+   - el color nuevo nace desde el punto por donde entró el cursor (--mx, --my). */
 .btn {
   --mx: 50%;
   --my: 50%;
-  --tx: 0px;
-  --ty: 0px;
   --fill: var(--color-accent);
   --on-fill: #fff;
   position: relative;
@@ -339,9 +336,7 @@ html.grabbing * {
   white-space: nowrap;
   overflow: hidden;
   isolation: isolate;
-  translate: var(--tx) var(--ty);
   transition:
-    translate 500ms var(--ease-out),
     scale 160ms var(--ease-out),
     background-color 300ms ease,
     color 450ms var(--ease-out),

@@ -13,6 +13,7 @@ import { photo, photoSrc } from '../../core/media';
 import { Motion, hasFinePointer, prefersReducedMotion } from '../../core/motion';
 import { Icon } from '../../shared/icon';
 import { Viewer, ViewerItem } from '../../shared/viewer';
+import { GalleryArchive } from './archive';
 import type { GalleryApi } from './engine';
 import { PANORAMA, TOTEMS, TRIPTYCH, WELCOME, programPhotos } from './programs';
 
@@ -30,11 +31,12 @@ const STOPS = 12;
 /**
  * Galería: una exposición en 3D (Three.js) que se recorre con el scroll. Cada sala tiene pantallas con su propia
  * programación y transiciones; las siluetas miran las pantallas. Tocar una pantalla abre la foto que está mostrando.
+ * Al terminar el recorrido sigue el archivo: todas las fotos en cuadrícula, con filtros.
  */
 @Component({
   selector: 'app-gallery',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Icon, Viewer],
+  imports: [RouterLink, Icon, Viewer, GalleryArchive],
   template: `
     <section class="walk" [style.--stops]="stops" aria-label="Recorrido por la galería">
       <div class="stage">
@@ -84,6 +86,7 @@ const STOPS = 12;
             <p class="script">¿Tu historia sigue?</p>
             <div class="end-actions">
               <a routerLink="/contacto" fragment="fechas" class="btn btn-light"><span class="btn-t">Aparta tu fecha</span></a>
+              <button type="button" class="btn btn-line-light" (click)="toArchive()"><span class="btn-t">Verlas en cuadrícula</span></button>
               <button type="button" class="btn btn-line-light" (click)="restart()"><span class="btn-t">Volver a la entrada</span></button>
             </div>
           </div>
@@ -105,6 +108,7 @@ const STOPS = 12;
       </div>
       <h1 class="visually-hidden">Galería de Astor: bodas, XV años y eventos sociales en Aguascalientes</h1>
     </section>
+    <app-gallery-archive id="archivo" (open)="openArchive($event)" />
     <app-viewer [items]="items()" [(index)]="index" tone="night" />
   `,
   styles: `
@@ -284,6 +288,16 @@ export default class Gallery {
     // Justo en el primer encuadre de la sala.
     const q = ROOM_STOP[i] / (STOPS - 1);
     this.motion.scrollTo(top + span * q, false, 0);
+  }
+
+  protected toArchive() {
+    const el = this.host.querySelector<HTMLElement>('#archivo');
+    if (el) this.motion.scrollTo(el.getBoundingClientRect().top + scrollY - 40, false, 0);
+  }
+
+  protected openArchive(e: { photos: string[]; index: number }) {
+    this.picked.set(e.photos);
+    this.index.set(e.index);
   }
 
   protected restart() {

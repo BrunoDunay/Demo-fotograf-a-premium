@@ -28,7 +28,10 @@ export type IconName =
   | 'verified'
   | 'send'
   | 'expand'
-  | 'scroll';
+  | 'scroll'
+  | 'pause'
+  | 'skip-back'
+  | 'skip-forward';
 
 /** Íconos de línea dibujados con plantillas (el prerender no admite innerHTML en SVG). */
 @Component({
@@ -74,6 +77,9 @@ export type IconName =
         @case ('verified') { <path d="m12 2.5 2.4 1.7 2.9-.1.9 2.8 2.4 1.7-.9 2.8.9 2.8-2.4 1.7-.9 2.8-2.9-.1L12 21.5l-2.4-1.7-2.9.1-.9-2.8-2.4-1.7.9-2.8-.9-2.8 2.4-1.7.9-2.8 2.9.1L12 2.5Z" fill="currentColor" stroke="none" /><path d="m8.5 12 2.3 2.3 4.7-4.6" stroke="#fff" /> }
         @case ('send') { <path d="M21 3 10 14M21 3l-7 18-4-7-7-4 18-7Z" /> }
         @case ('expand') { <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /> }
+        @case ('pause') { <path d="M8 5v14M16 5v14" stroke-width="3" /> }
+        @case ('skip-back') { <path d="M6 5v14" /><path d="M19 5.5v13L9 12l10-6.5Z" fill="currentColor" /> }
+        @case ('skip-forward') { <path d="M18 5v14" /><path d="M5 5.5v13L15 12 5 5.5Z" fill="currentColor" /> }
         @case ('scroll') { <rect x="7" y="3" width="10" height="18" rx="5" /><path d="M12 7v4" /> }
       }
     </svg>

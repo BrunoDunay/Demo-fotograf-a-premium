@@ -6,7 +6,7 @@ Leer primero `docs/astor.md` (ficha completa). Repositorio: https://github.com/B
 
 - `frontend/`: workspace de Angular 22 con una sola app, `projects/foto-astor` (puerto 4310).
   - `src/app/core/`: `content.ts` (textos, paquetes, reseñas, equipo), `media.ts` + `media.data.ts` (generado), `motion.ts` (GSAP, Lenis, bloqueo de scroll), `booking.ts` (fecha y paquete elegidos, disponibilidad ficticia), `seo.ts`.
-  - `src/app/sections/`: mesa de fotos (`photo-pile.*`), rollo de video (`film-reel.ts`), reseñas, tarjeta 3D (`business-card.ts`, Three.js), cámara colgante (`hanging-camera.ts`, Three.js + Verlet), calendario (`availability.ts`), formulario de WhatsApp, "save the date" (`dates-teaser.ts`), etc.
+  - `src/app/sections/`: mesa de fotos (`photo-pile.*`), sala de edición de video (`edit-suite.ts`), reseñas, tarjeta 3D (`business-card.ts`, Three.js), cámara colgante (`hanging-camera.ts`, Three.js + Verlet), calendario (`availability.ts`), formulario de WhatsApp, "save the date" (`dates-teaser.ts`), etc.
   - `src/app/pages/gallery/`: galería en Three.js. `engine.ts` (sala, recorrido, luces, siluetas, piso reflejante, postproceso), `screen.ts` (pantalla con shader de transiciones), `slides.ts` (dibujo de cada diapositiva en canvas 2D), `programs.ts` (qué pasa cada pantalla y con qué transición).
   - `scripts/media.mjs`: fotos y videos de Pexels → WebP / MP4 y `media.data.ts`. `scripts/brand-assets.mjs`: favicon, ícono de Apple y `og.jpg`. `scripts/recortes/`: PNG sin fondo (cámara, lente, dron, siluetas).
 - `referencias/`: material de Bruno (solo local, no se sube).
@@ -15,7 +15,7 @@ Leer primero `docs/astor.md` (ficha completa). Repositorio: https://github.com/B
 ## Convenciones y aprendizajes
 
 - Movimiento siempre activo; el interruptor "Reducir movimiento" del pie lo apaga (clase `.reduce-motion`).
-- `main` **no** lleva `z-index`: los visores (mesa de fotos, rollo, galería) usan `z-index` alto y deben quedar sobre el encabezado.
+- `main` **no** lleva `z-index`: los visores (mesa de fotos, sala de edición, galería) usan `z-index` alto y deben quedar sobre el encabezado.
 - `html { overflow-x: clip }`: nada se desplaza de lado (tarjetas giradas y decorados se asoman).
 - La mesa de fotos ignora el clic fantasma tras un toque (500 ms) para no cerrar la foto recién abierta.
 - El calendario y los boletos de sábados dependen de la fecha de hoy: el calendario se dibuja solo en el navegador.

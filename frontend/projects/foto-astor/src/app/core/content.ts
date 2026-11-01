@@ -13,7 +13,7 @@ export const BRAND = {
   address: 'Juan de Montoro 318, Zona Centro',
   hours: 'Lunes a viernes · 10:00 a 19:00',
   since: 2017,
-  portfolio: 'https://brunodunay.vercel.app',
+  portfolio: 'https://portafolio-web-chi-ten.vercel.app',
 };
 
 /** Lugares y planners con los que "ha trabajado" (nombres inventados). La fuente varía como en un muro de logos. */

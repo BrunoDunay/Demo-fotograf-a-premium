@@ -48,14 +48,6 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
                   <img [src]="src(p.photo)" [alt]="alt(p.photo)" loading="lazy" />
                 </figure>
                 @if (p.featured) {
-                  <div class="seal" aria-label="El más pedido">
-                    <svg viewBox="0 0 120 120" aria-hidden="true">
-                      <defs><path [attr.id]="'seal-' + p.id" d="M60 60m-45 0a45 45 0 1 1 90 0a45 45 0 1 1-90 0" /></defs>
-                      <circle cx="60" cy="60" r="58" class="bg" />
-                      <text><textPath [attr.href]="'#seal-' + p.id">EL MÁS PEDIDO · EL QUE MÁS CONVIENE ·</textPath></text>
-                    </svg>
-                    <svg class="st" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
-                  </div>
                   <p class="ribbon label"><span>★ Recomendado</span></p>
                 }
                 <div class="info">
@@ -194,13 +186,6 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
     .ticket.featured .includes app-icon { color: var(--color-accent-soft); }
     .ticket.featured .amount { font-size: clamp(2.4rem, 4vw, 3.4rem); }
     .value { margin-top: 10px; max-width: 18ch; text-align: center; font-size: 0.8rem; line-height: 1.4; color: var(--color-accent-soft); }
-    .seal { position: absolute; z-index: 3; left: 128px; top: -30px; width: 104px; height: 104px; display: grid; place-items: center; filter: drop-shadow(0 10px 18px rgb(10 16 34 / 45%)); }
-    .seal > svg:first-child { position: absolute; inset: 0; animation: seal-spin 16s linear infinite; }
-    .seal .bg { fill: var(--color-accent); }
-    .seal text { font-family: var(--font-label); font-size: 10.5px; font-weight: 600; letter-spacing: 1.6px; fill: #fff; }
-    .seal .st { position: relative; width: 26px; height: 26px; fill: #fff; animation: seal-twinkle 2.6s var(--ease-in-out) infinite; }
-    @keyframes seal-spin { to { rotate: 360deg; } }
-    @keyframes seal-twinkle { 50% { scale: 1.25; rotate: 45deg; } }
     .ribbon { position: absolute; z-index: 2; top: 22px; left: -8px; padding: 7px 14px 7px 16px; background: var(--color-accent); color: #fff; font-size: 0.6rem; box-shadow: 0 6px 14px -6px rgb(0 0 0 / 50%); }
     .ribbon::after { content: ''; position: absolute; left: 0; top: 100%; border: 4px solid transparent; border-top-color: #6e3231; border-right-color: #6e3231; }
     @media (hover: hover) and (pointer: fine) { .ticket:not(.featured):hover { translate: 0 -3px; box-shadow: var(--shadow-lift); } .ticket.featured:hover { translate: 0 -4px; } }
@@ -271,7 +256,6 @@ const GROUPS: { id: string; name: Package['group']; script: string }[] = [
       .info { padding-bottom: 14px; }
       .extras-grid, .faq-grid { grid-template-columns: 1fr; }
       .ticket.featured { scale: 1; }
-      .seal { left: auto; right: 10px; top: -30px; width: 88px; height: 88px; }
       .value { grid-column: 1 / -1; text-align: left; max-width: none; margin-top: 0; }
     }
   `,

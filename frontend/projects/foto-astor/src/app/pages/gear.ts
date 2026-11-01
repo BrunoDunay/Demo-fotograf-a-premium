@@ -9,7 +9,7 @@ import { Reveal } from '../shared/reveal';
 import { HangingCamera } from '../sections/hanging-camera';
 
 /**
- * Mi equipo: una cámara en 3D cuelga de su correa (con física); se agarra, se jala y se mece. Abajo, las fichas
+ * Mi equipo: una cámara réflex en 3D cuelga de su correa (con física); el cursor la roza y se mece. Abajo, las fichas
  * técnicas del equipo y la pantalla del dron con una toma aérea que se mueve con el cursor.
  */
 @Component({
@@ -24,9 +24,9 @@ import { HangingCamera } from '../sections/hanging-camera';
         <h1 class="title">Lo que cargo <em>en cada evento</em></h1>
         <p class="lead">
           Cámaras, lentes, dron y luces, explicados sin rodeos. Y sí: esa cámara que cuelga es la que nunca se queda en
-          casa. Agárrala y suéltala, o pásale el cursor encima.
+          casa. <span class="fine">Pásale el cursor encima</span><span class="touch">Tócala</span> y mira cómo se mece.
         </p>
-        <p class="label hint"><app-icon name="drag" [size]="16" /> Agárrala, jálala y suéltala</p>
+        <p class="label hint"><app-icon name="drag" [size]="16" /> <span class="fine">Pasa el cursor para mecerla</span><span class="touch">Toca para mecerla</span></p>
       </div>
     </section>
 
@@ -122,6 +122,8 @@ import { HangingCamera } from '../sections/hanging-camera';
     .copy { grid-column: 1; grid-row: 1; position: relative; z-index: 2; display: grid; gap: 20px; max-width: 560px; padding-block: 60px; }
     .title { font-size: var(--text-3xl); }
     .title em { display: block; color: var(--color-accent); margin: 0.02em 0 0 0.6em; }
+    .touch { display: none; }
+    @media (hover: none), (pointer: coarse) { .fine { display: none; } .touch { display: inline; } }
     .hint { display: inline-flex; align-items: center; gap: 10px; color: var(--color-muted); }
 
     .head { display: grid; gap: 14px; margin-bottom: 40px; }

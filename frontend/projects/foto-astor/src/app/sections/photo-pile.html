@@ -40,8 +40,11 @@
             <img [src]="photoSrc(c.photo, true)" [alt]="c.photo.alt" draggable="false" loading="eager" decoding="async" />
           </div>
           <figcaption>
-            <span class="who">{{ c.who }}</span>
-            <span class="where">{{ c.where }}</span>
+            <span class="cap-text">
+              <span class="who">{{ c.who }}</span>
+              <span class="where">{{ c.where }}</span>
+            </span>
+            <svg class="stamp" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
           </figcaption>
         </div>
       </figure>
@@ -95,8 +98,11 @@
             <span class="gloss" aria-hidden="true"></span>
           </div>
           <figcaption>
-            <span class="who">{{ z.who }}</span>
-            <span class="where">{{ z.where }}</span>
+            <span class="cap-text">
+              <span class="who">{{ z.who }}</span>
+              <span class="where">{{ z.where }}</span>
+            </span>
+            <svg class="stamp" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c.7 6.3 5 10.9 12 12-7 1.1-11.3 5.7-12 12-.7-6.3-5-10.9-12-12 7-1.1 11.3-5.7 12-12Z" /></svg>
           </figcaption>
         </div>
       </figure>

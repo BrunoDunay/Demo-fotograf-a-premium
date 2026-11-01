@@ -6,16 +6,16 @@ La marca, las personas, las reseñas, los datos de contacto y los precios son in
 
 Lo más destacado:
 
-- **Mesa de fotos** en la portada: arrastrar, lanzar, ver de cerca en 3D y soltar más fotos al azar.
-- **Galería en 3D** (Three.js) que se recorre con el scroll como cambios de escena: cinco salas con pantallas LED, transiciones suaves, siluetas mirando, logo en muros y piso, y piso pulido que refleja.
-- **Rollo de película** con videos, en blanco y negro o a color.
-- **Cámara en 3D colgando de su correa** (con física) y **tarjeta de presentación en 3D** en cuatro colores, calendario de pared, "save the date", reseñas tipo Instagram y formulario que abre WhatsApp.
+- **Mesa de fotos** en la portada (copias de cuarto oscuro): arrastrar, lanzar, ver de cerca en 3D y soltar más fotos al azar.
+- **Galería en 3D** (Three.js) que se recorre con el scroll como cambios de escena: cinco salas con pantallas LED, transiciones suaves, siluetas mirando, logo en muros y piso, y piso pulido que refleja. Al final, un archivo en mosaico con filtros.
+- **Sala de edición** con monitor y línea de tiempo que reproduce los clips completos.
+- **Réflex en 3D colgando de su correa** (con física; se mece al rozarla) y **tarjeta de presentación en 3D** en cuatro colores, calendario de pared, "save the date", reseñas tipo Instagram y formulario que abre WhatsApp.
 
 La ficha de diseño completa (concepto, paleta, tipografías, secciones e interacciones) está en `docs/astor.md`.
 
 ## Código
 
-Workspace de Angular 22 en `frontend/` con la app `projects/foto-astor`. Salida estática prerenderizada, componentes standalone con signals y sin zone.js, GSAP + Lenis para el movimiento y Three.js solo en la galería (se carga al entrar).
+Workspace de Angular 22 en `frontend/` con la app `projects/foto-astor`. Salida estática prerenderizada, componentes standalone con signals y sin zone.js, GSAP + Lenis para el movimiento y Three.js en la galería, la cámara y la tarjeta (se carga al entrar).
 
 ```bash
 cd frontend

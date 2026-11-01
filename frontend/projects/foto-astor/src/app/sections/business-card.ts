@@ -3,10 +3,10 @@ import { BRAND } from '../core/content';
 import { hasFinePointer, prefersReducedMotion } from '../core/motion';
 import { Icon } from '../shared/icon';
 
-/** Colores de la tarjeta: papel, tinta, foil y canto pintado. */
+/** Colores de la tarjeta: papel, tinta, foil y canto pintado. La primera (Medianoche) es la de inicio. */
 const VARIANTS = [
-  { id: 'porcelana', label: 'Porcelana', paper: '#f3f2ee', ink: '#141b2d', foil: '#c9ccd3', edge: '#a4514f' },
   { id: 'medianoche', label: 'Medianoche', paper: '#121a2e', ink: '#e4e7ee', foil: '#e6b0a8', edge: '#e6b0a8' },
+  { id: 'porcelana', label: 'Porcelana', paper: '#f3f2ee', ink: '#141b2d', foil: '#c9ccd3', edge: '#a4514f' },
   { id: 'rosa', label: 'Palo de rosa', paper: '#e6c7c1', ink: '#3b2228', foil: '#f1e6d6', edge: '#3b2228' },
   { id: 'carbon', label: 'Carbón', paper: '#222326', ink: '#d9d5cd', foil: '#d6b27a', edge: '#d6b27a' },
 ] as const;
@@ -362,6 +362,67 @@ function drawFace(v: Variant, side: 'front' | 'back'): FaceCanvases {
     draw(bump);
     bump.restore();
   };
+  /**
+   * Grabado hundido para el logo: la figura se imprime y, dentro de ella, el borde de arriba a la izquierda
+   * proyecta una sombra y el de abajo a la derecha atrapa luz. Así se ve con profundidad sin sobresalir.
+   */
+  const deboss = (draw: (c: CanvasRenderingContext2D) => void, color: string, metallic = false) => {
+    const shape = document.createElement('canvas');
+    shape.width = TW;
+    shape.height = TH;
+    const sc = shape.getContext('2d')!;
+    sc.fillStyle = sc.strokeStyle = color;
+    draw(sc);
+    // Inverso de la figura: todo menos la figura.
+    const inv = document.createElement('canvas');
+    inv.width = TW;
+    inv.height = TH;
+    const ic = inv.getContext('2d')!;
+    ic.fillStyle = '#000';
+    ic.fillRect(0, 0, TW, TH);
+    ic.globalCompositeOperation = 'destination-out';
+    ic.fillStyle = ic.strokeStyle = '#000';
+    draw(ic);
+    const inner = (ox: number, oy: number, blur: number, tint: string) => {
+      sc.save();
+      sc.globalCompositeOperation = 'source-atop';
+      sc.shadowColor = tint;
+      sc.shadowBlur = blur;
+      // El inverso se dibuja fuera de la hoja; solo su sombra cae dentro de la figura.
+      sc.shadowOffsetX = TW * 2 + ox;
+      sc.shadowOffsetY = oy;
+      sc.drawImage(inv, -TW * 2, 0);
+      sc.restore();
+    };
+    inner(7, 10, 12, 'rgba(0,0,0,0.62)');
+    inner(3, 4, 3, 'rgba(0,0,0,0.45)');
+    inner(-4, -5, 6, 'rgba(255,255,255,0.28)');
+    map.drawImage(shape, 0, 0);
+    // Fuera de la figura: un hilo de luz en el canto inferior derecho del papel, donde el hundido "corta" la hoja.
+    map.save();
+    map.globalCompositeOperation = 'source-over';
+    map.filter = 'blur(1.2px)';
+    map.globalAlpha = 0.22;
+    map.drawImage(maskOf(shape, '#ffffff'), 2, 3);
+    map.restore();
+    map.drawImage(shape, 0, 0);
+    // Relieve: la figura queda más abajo que el papel, con paredes suaves.
+    bump.save();
+    bump.filter = 'blur(3px)';
+    bump.fillStyle = bump.strokeStyle = '#262626';
+    draw(bump);
+    bump.restore();
+    if (metallic) {
+      metal.save();
+      metal.fillStyle = metal.strokeStyle = '#fff';
+      draw(metal);
+      metal.restore();
+      rough.save();
+      rough.fillStyle = rough.strokeStyle = 'rgb(70,70,70)';
+      draw(rough);
+      rough.restore();
+    }
+  };
   const blind = (draw: (c: CanvasRenderingContext2D) => void) => {
     bump.save();
     bump.filter = 'blur(5px)';
@@ -396,24 +457,24 @@ function drawFace(v: Variant, side: 'front' | 'back'): FaceCanvases {
   if (side === 'front') {
     // Frente: órbita y estrella en foil, ASTOR hundido al centro y una línea de oficio abajo.
     blind((c) => orbit(c, cx, TH * 0.5, TW * 0.46, TH * 0.2, 10));
-    foil((c) => orbit(c, cx, TH * 0.47, TW * 0.27, TH * 0.11, 5));
-    foil((c) => {
+    deboss((c) => orbit(c, cx, TH * 0.47, TW * 0.27, TH * 0.11, 7), v.foil, true);
+    deboss((c) => {
       const a = (-0.62 * Math.PI);
       const x = TW * 0.27 * Math.cos(a);
       const y = TH * 0.11 * Math.sin(a);
       const t = (-8 * Math.PI) / 180;
       c.beginPath();
-      c.arc(cx + x * Math.cos(t) - y * Math.sin(t), TH * 0.47 + x * Math.sin(t) + y * Math.cos(t), 13, 0, Math.PI * 2);
+      c.arc(cx + x * Math.cos(t) - y * Math.sin(t), TH * 0.47 + x * Math.sin(t) + y * Math.cos(t), 15, 0, Math.PI * 2);
       c.fill();
-    });
-    ink((c) => text(c, 'ASTOR', cx + 30, TH * 0.57, '400 300px "Instrument Serif", serif', 44, 'center'));
-    foil((c) => star(c, cx - 420, TH * 0.33, 54));
+    }, v.foil, true);
+    deboss((c) => text(c, 'ASTOR', cx + 30, TH * 0.57, '400 300px "Instrument Serif", serif', 44, 'center'), v.ink);
+    deboss((c) => star(c, cx - 420, TH * 0.33, 58), v.foil, true);
     ink((c) => text(c, 'FOTOGRAFÍA  ·  BODAS Y EVENTOS  ·  AGUASCALIENTES', cx, TH * 0.84, '600 44px "Instrument Sans Variable", sans-serif', 12, 'center'), 0.9);
   } else {
     // Reverso: nombre, oficio, una línea de foil y los datos en dos columnas.
     const x = 150;
     blind((c) => orbit(c, TW * 0.92, TH * 0.5, TW * 0.3, TH * 0.5, 9));
-    foil((c) => star(c, x + 26, 190, 34));
+    deboss((c) => star(c, x + 26, 190, 38), v.foil, true);
     ink((c) => text(c, 'Emilio Astor', x, 420, 'italic 400 150px "Instrument Serif", serif'));
     ink((c) => text(c, 'FOTÓGRAFO DE BODAS, XV AÑOS Y EVENTOS', x, 500, '500 32px "Instrument Sans Variable", sans-serif', 9), 0.75);
     foil((c) => c.fillRect(x, 566, 220, 5));
@@ -430,6 +491,19 @@ function drawFace(v: Variant, side: 'front' | 'back'): FaceCanvases {
     foil((c) => text(c, 'BODAS  ✦  XV AÑOS  ✦  EVENTOS SOCIALES', x, TH - 110, '500 30px "Instrument Sans Variable", sans-serif', 10));
   }
   return f;
+}
+
+/** Copia de la silueta de una figura, pintada de un solo color. */
+function maskOf(src: HTMLCanvasElement, color: string) {
+  const c = document.createElement('canvas');
+  c.width = src.width;
+  c.height = src.height;
+  const x = c.getContext('2d')!;
+  x.drawImage(src, 0, 0);
+  x.globalCompositeOperation = 'source-in';
+  x.fillStyle = color;
+  x.fillRect(0, 0, c.width, c.height);
+  return c;
 }
 
 function luminance(hex: string) {
