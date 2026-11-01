@@ -79,7 +79,7 @@ const LINKS = [
     }
   `,
   styles: `
-    :host { position: fixed; inset: 0 0 auto; z-index: var(--z-header); view-transition-name: site-header; color: var(--color-ink); transition: translate 420ms var(--ease-out), color 400ms ease; }
+    :host { position: fixed; inset: 0 0 auto; z-index: var(--z-header); color: var(--color-ink); transition: translate 420ms var(--ease-out), color 400ms ease; }
     :host(.hidden) { translate: 0 -110%; }
     .bar {
       position: relative;

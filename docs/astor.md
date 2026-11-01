@@ -37,6 +37,8 @@ Cielo de estrellas que se acerca; nace la estrella con un destello de lente; un 
 6. **Reseñas estilo Instagram** (referencia "Dejar reseñas"): caja para escribir (sello redondo, cinta, estrellas) y comentarios con "me gusta" y respuestas verificadas de @astor.foto. Sin backend: lo que publicas aparece arriba "En revisión" solo en tu navegador.
 7. **¿Ya tienen fecha?:** eliges qué celebras, escribes los nombres y tocas tu día en un calendario (sin fechas ocupadas); al lado se arma una tarjeta "Save the date" con la cuenta regresiva. "Apartar esta fecha" lleva fecha y tipo de evento al formulario.
 
+**Cambio de página:** un obturador. La noche se abre desde el centro y tapa la página, se enciende la estrella con su destello y la órbita la rodea; con la página nueva lista debajo, la noche se cierra hacia el centro como un diafragma (~1.2 s). El router espera a que tape (`shared/page-curtain.ts`), así nunca se ve el cambio de contenido. Sustituye al fundido de View Transitions.
+
 ### Galería (`/galeria`, `pages/gallery/`)
 Exposición en **Three.js** que se recorre con el scroll como **cambios de escena dentro de la misma galería**: 12 encuadres compuestos; dentro de una sala la cámara se desliza de uno a otro y entre salas hay un fundido breve a negro (también al rodear la caja). El avance sigue al scroll con un resorte amortiguado (sin atorarse ni brincar). Piso de concreto pulido con reflejo limpio (Fresnel, sin distorsión), muros de yeso oscuro con luz que los baña desde arriba, techo en penumbra, MSAA y sin grano.
 

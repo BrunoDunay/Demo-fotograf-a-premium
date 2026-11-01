@@ -4,7 +4,7 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import { provideRouter, withRouterConfig, withViewTransitions } from '@angular/router';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -17,13 +17,6 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       routes,
       withRouterConfig({ onSameUrlNavigation: 'reload' }),
-      withViewTransitions({
-        skipInitialTransition: true,
-        onViewTransitionCreated: ({ transition, from, to }) => {
-          const samePage = from.routeConfig === to.routeConfig;
-          if (samePage || document.documentElement.classList.contains('reduce-motion')) transition.skipTransition();
-        },
-      }),
     ),
     provideClientHydration(withEventReplay()),
   ],

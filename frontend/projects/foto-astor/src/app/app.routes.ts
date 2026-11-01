@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
 import Home from './pages/home';
+import { pageCurtainGuard } from './shared/page-curtain';
 
 // data.seo: título y descripción de cada página (core/seo.ts). data.theme: 'night' pinta el encabezado claro.
-export const routes: Routes = [
+const pages: Routes = [
   {
     path: '',
     component: Home,
@@ -91,3 +92,6 @@ export const routes: Routes = [
     data: { seo: { title: 'Página no encontrada · Astor Fotografía', description: 'Esta página no existe.' } },
   },
 ];
+
+/** Todas las páginas esperan a que el obturador tape la pantalla antes de cambiar (shared/page-curtain.ts). */
+export const routes: Routes = pages.map((r) => ({ ...r, canActivate: [pageCurtainGuard] }));

@@ -7,14 +7,16 @@ import { CookieBanner } from './shared/cookie-banner';
 import { Footer } from './shared/footer';
 import { Header } from './shared/header';
 import { Intro } from './shared/intro';
+import { PageCurtain } from './shared/page-curtain';
 
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, Header, Footer, Intro, CookieBanner],
+  imports: [RouterOutlet, Header, Footer, Intro, CookieBanner, PageCurtain],
   template: `
     <a class="skip" href="#contenido">Saltar al contenido</a>
     <app-intro />
+    <app-page-curtain />
     <app-header [theme]="theme()" />
     <main id="contenido">
       <router-outlet />

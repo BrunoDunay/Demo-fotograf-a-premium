@@ -590,43 +590,7 @@ html.grabbing * {
   scale: 1;
 }
 
-/* ===== Cambio de página (View Transitions) =====
-   La página anterior se hunde y se apaga sobre la noche; la nueva sube como una cortina. El encabezado se queda. */
-::view-transition {
-  background: var(--color-night);
-}
-
-::view-transition-old(root) {
-  animation: page-out 640ms cubic-bezier(0.65, 0, 0.35, 1) both;
-  transform-origin: 50% 0;
-}
-
-::view-transition-new(root) {
-  animation: page-in 1000ms cubic-bezier(0.32, 0.72, 0, 1) 140ms both;
-}
-
-::view-transition-group(site-header) {
-  animation-duration: 600ms;
-}
-
-@keyframes page-out {
-  to {
-    opacity: 0.25;
-    transform: translateY(-5vh) scale(0.94);
-    filter: blur(3px);
-  }
-}
-
-@keyframes page-in {
-  from {
-    clip-path: inset(100% 0 0 0);
-    transform: translateY(14vh);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-    transform: none;
-  }
-}
+/* ===== Cambio de página: obturador con la estrella (app/shared/page-curtain.ts) ===== */
 
 /* Interruptor "Reducir movimiento": quita transiciones largas y animaciones decorativas. */
 .reduce-motion *,
