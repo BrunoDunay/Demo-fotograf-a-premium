@@ -24,7 +24,10 @@ Leer primero `docs/astor.md` (ficha completa). Repositorio: https://github.com/B
 - Paleta fría a propósito (porcelana, medianoche, palo de rosa) para no parecerse a Armando Ovalle Wedding Studio.
 - Capturas de revisión: puppeteer-core con el Chrome instalado; para la galería en modo sin pantalla agregar `--enable-unsafe-swiftshader`.
 
-## Estado (31 oct 2026)
+## Estado (actualizado 4 nov 2026)
 
 - Sitio completo en local: inicio, galería 3D, sobre mí, mi equipo, paquetes, contacto, legales y 404. Compila sin errores ni advertencias.
-- Pendiente: publicar en Vercel cuando Bruno lo apruebe, video demo (después) y, si se vende, backend para reseñas y calendario.
+- Publicada el 1 nov 2026 en https://demo-foto-astor.vercel.app (Vercel `demo-foto-astor`, raíz `frontend`, se publica sola con push a `main`) y agregada al portafolio.
+- Carpeta: `Trabajos/2-Demos/Fotografia/Astor-Premium` (junto a Nido, la demo Pro de fotografía, en `../Nido-Pro`).
+- `referencias/` queda fuera del repo a propósito.
+- Pendiente: video demo y, si se vende, backend para reseñas y calendario.
