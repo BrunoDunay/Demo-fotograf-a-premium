@@ -123,7 +123,8 @@ function build(
   key.shadow.camera.right = 4;
   key.shadow.camera.top = 3;
   key.shadow.camera.bottom = -6;
-  key.shadow.bias = -0.0005;
+  key.shadow.bias = -0.0006;
+  key.shadow.normalBias = 0.02;
   scene.add(key);
   const rim = new THREE.DirectionalLight(0xc9d6ff, 2.2);
   rim.position.set(5, 2, -3);
@@ -156,50 +157,6 @@ function build(
     return t;
   };
   const spacing = (c: CanvasRenderingContext2D, px: number) => ((c as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${px}px`);
-  // Grano fino del magnesio pintado.
-  const grain = canvasTex(512, 512, (c) => {
-    c.fillStyle = '#808080';
-    c.fillRect(0, 0, 512, 512);
-    for (let i = 0; i < 40000; i++) {
-      const g = 110 + Math.random() * 40;
-      c.fillStyle = `rgb(${g},${g},${g})`;
-      c.fillRect(Math.random() * 512, Math.random() * 512, 1.4, 1.4);
-    }
-  });
-  grain.repeat.set(3, 3);
-  // Hule de la empuñadura: puntitos en relieve.
-  const pebble = canvasTex(512, 512, (c) => {
-    c.fillStyle = '#5a5a5a';
-    c.fillRect(0, 0, 512, 512);
-    for (let i = 0; i < 9000; i++) {
-      const g = 140 + Math.random() * 90;
-      c.fillStyle = `rgb(${g},${g},${g})`;
-      c.beginPath();
-      c.arc(Math.random() * 512, Math.random() * 512, Math.random() * 2.6 + 1, 0, 6.28);
-      c.fill();
-    }
-  });
-  pebble.repeat.set(2, 3);
-  // Estrías de los anillos de hule (a lo largo del eje del lente).
-  const ribs = canvasTex(512, 8, (c) => {
-    for (let x = 0; x < 512; x += 8) {
-      const g = c.createLinearGradient(x, 0, x + 8, 0);
-      g.addColorStop(0, '#202020');
-      g.addColorStop(0.5, '#f0f0f0');
-      g.addColorStop(1, '#202020');
-      c.fillStyle = g;
-      c.fillRect(x, 0, 8, 8);
-    }
-  });
-  ribs.repeat.set(5, 1);
-  // Estrías finas de los diales.
-  const knurl = canvasTex(512, 8, (c) => {
-    for (let x = 0; x < 512; x += 4) {
-      c.fillStyle = x % 8 ? '#2a2a2a' : '#e0e0e0';
-      c.fillRect(x, 0, 4, 8);
-    }
-  });
-  knurl.repeat.set(4, 1);
   // Letras del lente impresas en el barril (se repiten para que se lean desde cualquier giro).
   const barrelText = canvasTex(
     2048,
@@ -217,30 +174,6 @@ function build(
         c.fillText('◆', 790 + i * 1024, 66);
         c.fillStyle = '#e9ebef';
       }
-    },
-    true,
-  );
-  // Anillo frontal (dentro del parasol) con el nombre del lente.
-  const nameRing = canvasTex(
-    1024,
-    1024,
-    (c) => {
-      c.fillStyle = '#0b0c10';
-      c.fillRect(0, 0, 1024, 1024);
-      c.translate(512, 512);
-      c.fillStyle = '#c9ccd3';
-      c.font = '600 30px "Instrument Sans Variable", sans-serif';
-      c.textAlign = 'center';
-      const s = 'ASTOR OPTICS  ·  ZOOM LENS 24–70 mm 1:2.8  ·  Ø82 mm  ·  ';
-      const r = 452;
-      const step = (Math.PI * 2) / s.length;
-      [...s].forEach((ch, i) => {
-        c.save();
-        c.rotate(i * step);
-        c.translate(0, -r);
-        c.fillText(ch, 0, 0);
-        c.restore();
-      });
     },
     true,
   );
@@ -423,33 +356,15 @@ function build(
   strapTex.repeat.set(1, 1.4);
 
   // ===== Materiales =====
-  const bodyMat = track(new THREE.MeshPhysicalMaterial({ color: 0x0b0c0f, roughness: 0.55, roughnessMap: roughVar, metalness: 0.02, clearcoat: 0.18, clearcoatRoughness: 0.5, sheen: 0.25, sheenRoughness: 0.6, sheenColor: 0x6a7080, bumpMap: grain, bumpScale: 0.3, envMapIntensity: 0.75 }));
-  const rubber = track(new THREE.MeshPhysicalMaterial({ color: 0x08090b, roughness: 0.78, metalness: 0, bumpMap: pebble, bumpScale: 2.2, sheen: 0.5, sheenRoughness: 0.5, sheenColor: 0x50545e, envMapIntensity: 0.7 }));
-  const ribbed = track(new THREE.MeshStandardMaterial({ color: 0x090a0c, roughness: 0.7, metalness: 0, bumpMap: ribs, bumpScale: 3, envMapIntensity: 0.7 }));
+  const bodyMat = track(new THREE.MeshPhysicalMaterial({ color: 0x0b0c0f, roughness: 0.55, roughnessMap: roughVar, metalness: 0.02, clearcoat: 0.18, clearcoatRoughness: 0.5, sheen: 0.25, sheenRoughness: 0.6, sheenColor: 0x6a7080, envMapIntensity: 0.75 }));
+  const rubber = track(new THREE.MeshPhysicalMaterial({ color: 0x08090b, roughness: 0.78, metalness: 0, sheen: 0.5, sheenRoughness: 0.5, sheenColor: 0x50545e, envMapIntensity: 0.7 }));
   const barrel = track(new THREE.MeshPhysicalMaterial({ color: 0x0d0e11, roughness: 0.42, metalness: 0.1, clearcoat: 0.4, clearcoatRoughness: 0.4, envMapIntensity: 0.6 }));
   const barrelPrint = track(new THREE.MeshPhysicalMaterial({ map: barrelText, roughness: 0.42, metalness: 0.1, clearcoat: 0.4, clearcoatRoughness: 0.4, envMapIntensity: 0.6 }));
   const darkMetal = track(new THREE.MeshStandardMaterial({ color: 0x1b1c21, roughness: 0.32, metalness: 0.85 }));
-  const knurlMat = track(new THREE.MeshStandardMaterial({ color: 0x1c1d22, roughness: 0.4, metalness: 0.8, bumpMap: knurl, bumpScale: 2 }));
   const chrome = track(new THREE.MeshStandardMaterial({ color: 0xd8dbe1, roughness: 0.16, metalness: 1 }));
   const accent = track(new THREE.MeshPhysicalMaterial({ color: 0xa4514f, roughness: 0.3, metalness: 0.3, clearcoat: 0.8 }));
   const screen = track(new THREE.MeshPhysicalMaterial({ color: 0x050609, roughness: 0.06, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03 }));
-  const glass = track(
-    new THREE.MeshPhysicalMaterial({
-      color: 0x04060b,
-      roughness: 0.03,
-      metalness: 0,
-      clearcoat: 1,
-      clearcoatRoughness: 0.01,
-      iridescence: 1,
-      iridescenceIOR: 1.7,
-      iridescenceThicknessMinimum: 220,
-      iridescenceThicknessMaximum: 640,
-      envMapIntensity: 1.8,
-    }),
-  );
-  const innerGlass = track(new THREE.MeshPhysicalMaterial({ color: 0x0a0d18, roughness: 0.05, clearcoat: 1, iridescence: 0.7, iridescenceThicknessMinimum: 400, iridescenceThicknessMaximum: 900, envMapIntensity: 1.2 }));
   const void_ = track(new THREE.MeshBasicMaterial({ color: 0x010102 }));
-  const ringMat = track(new THREE.MeshStandardMaterial({ map: nameRing, roughness: 0.5, metalness: 0.2 }));
   const dialMat = track(new THREE.MeshStandardMaterial({ map: dialTop, roughness: 0.4, metalness: 0.5 }));
   const logoMat = track(new THREE.MeshStandardMaterial({ map: logoTex, transparent: true, roughness: 0.35, metalness: 0.1 }));
   const lamp = track(new THREE.MeshPhysicalMaterial({ color: 0x3a0a0c, roughness: 0.1, clearcoat: 1 }));
@@ -463,22 +378,244 @@ function build(
   const strapMat = track(new THREE.MeshStandardMaterial({ map: strapTex, roughness: 0.92, metalness: 0, side: THREE.DoubleSide }));
   const tabMat = track(new THREE.MeshStandardMaterial({ color: 0x18191d, roughness: 0.55, metalness: 0.1, side: THREE.DoubleSide }));
 
-  // ===== Modelo (unidades: el cuerpo mide 2.9 de ancho; el lente apunta a +z; la empuñadura va en -x) =====
+  // ===== Relieves (mapas de normales hechos en canvas) =====
+  const smooth = (a: number, b: number, x: number) => {
+    const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  /** Dibuja una altura en grises (que repite sin costura) y la convierte en mapa de normales. */
+  const normalTex = (size: number, strength: number, draw: (c: CanvasRenderingContext2D, wrap: (x: number, y: number, r: number, fn: (x: number, y: number) => void) => void) => void) => {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = size;
+    const c = cv.getContext('2d', { willReadFrequently: true })!;
+    const wrap = (x: number, y: number, r: number, fn: (x: number, y: number) => void) => {
+      for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) if (x + ox > -r && x + ox < size + r && y + oy > -r && y + oy < size + r) fn(x + ox, y + oy);
+    };
+    draw(c, wrap);
+    const src = c.getImageData(0, 0, size, size).data;
+    const out = c.createImageData(size, size);
+    const H = (x: number, y: number) => src[(((y + size) % size) * size + ((x + size) % size)) * 4] / 255;
+    for (let y = 0; y < size; y++)
+      for (let x = 0; x < size; x++) {
+        const dx = (H(x + 1, y) - H(x - 1, y)) * strength;
+        const dy = (H(x, y + 1) - H(x, y - 1)) * strength;
+        const l = Math.hypot(dx, dy, 1);
+        const i = (y * size + x) * 4;
+        out.data[i] = (-dx / l) * 127.5 + 127.5;
+        out.data[i + 1] = (dy / l) * 127.5 + 127.5;
+        out.data[i + 2] = (1 / l) * 127.5 + 127.5;
+        out.data[i + 3] = 255;
+      }
+    c.putImageData(out, 0, 0);
+    const t = track(new THREE.CanvasTexture(cv));
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = aniso;
+    return t;
+  };
+  // Piel sintética de la empuñadura: granitos redondos apretados, como el hule moldeado de una cámara.
+  const leatherN = normalTex(512, 5.5, (c, wrap) => {
+    c.fillStyle = '#000';
+    c.fillRect(0, 0, 512, 512);
+    c.globalCompositeOperation = 'lighten';
+    for (let i = 0; i < 5200; i++) {
+      const x = Math.random() * 512;
+      const y = Math.random() * 512;
+      const r = 4 + Math.random() * 5.5;
+      const top = 150 + Math.random() * 105;
+      wrap(x, y, r, (px, py) => {
+        const g = c.createRadialGradient(px, py, 0, px, py, r);
+        g.addColorStop(0, `rgb(${top},${top},${top})`);
+        g.addColorStop(0.55, `rgb(${top * 0.72},${top * 0.72},${top * 0.72})`);
+        g.addColorStop(1, 'rgb(0,0,0)');
+        c.fillStyle = g;
+        c.fillRect(px - r, py - r, r * 2, r * 2);
+      });
+    }
+  });
+  // Pintura texturizada del magnesio: moteado muy fino, apenas se nota en los brillos.
+  const paintN = normalTex(512, 1.6, (c, wrap) => {
+    c.fillStyle = '#808080';
+    c.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 26000; i++) {
+      const g = 70 + Math.random() * 120;
+      const r = 0.7 + Math.random() * 1.1;
+      c.fillStyle = `rgba(${g},${g},${g},0.55)`;
+      wrap(Math.random() * 512, Math.random() * 512, r, (px, py) => {
+        c.beginPath();
+        c.arc(px, py, r, 0, 6.283);
+        c.fill();
+      });
+    }
+  });
+  // Pantalla superior de cristal líquido, encendida.
+  const lcdTex = canvasTex(
+    512,
+    320,
+    (c) => {
+      c.fillStyle = '#232a27';
+      c.fillRect(0, 0, 512, 320);
+      c.fillStyle = '#060807';
+      c.textBaseline = 'middle';
+      c.font = '600 92px "Instrument Sans Variable", sans-serif';
+      spacing(c, 4);
+      c.fillText('1/250', 34, 92);
+      c.font = '600 62px "Instrument Sans Variable", sans-serif';
+      c.fillText('F2.8', 36, 190);
+      c.fillText('ISO 400', 230, 190);
+      c.font = '600 40px "Instrument Sans Variable", sans-serif';
+      c.fillText('RAW', 36, 268);
+      c.fillText('[ 312 ]', 180, 268);
+      c.strokeStyle = '#060807';
+      c.lineWidth = 5;
+      c.strokeRect(384, 248, 80, 38);
+      c.fillRect(464, 258, 8, 18);
+      c.fillRect(392, 256, 48, 22);
+      c.fillRect(350, 64, 110, 10);
+      for (let i = 0; i < 5; i++) c.fillRect(352 + i * 26, 84, 6, i === 2 ? 26 : 14);
+    },
+    true,
+  );
+  lcdTex.wrapS = lcdTex.wrapT = THREE.ClampToEdgeWrapping;
+  // Pantalla trasera encendida: los ajustes de la toma, como la deja un fotógrafo entre foto y foto.
+  const backTex = canvasTex(
+    1024,
+    640,
+    (c) => {
+      c.fillStyle = '#05070c';
+      c.fillRect(0, 0, 1024, 640);
+      c.textBaseline = 'middle';
+      c.fillStyle = '#e2a7a0';
+      c.font = '600 44px "Instrument Sans Variable", sans-serif';
+      spacing(c, 6);
+      c.fillText('M', 48, 70);
+      c.fillStyle = '#cdd2dc';
+      c.font = '600 30px "Instrument Sans Variable", sans-serif';
+      c.fillText('RAW  ·  AF-C  ·  AWB', 130, 72);
+      c.fillText('[ 312 ]', 850, 72);
+      c.font = '400 150px "Instrument Serif", serif';
+      spacing(c, 0);
+      c.fillText('1/250', 44, 250);
+      c.fillText('F2.8', 560, 250);
+      c.font = '600 34px "Instrument Sans Variable", sans-serif';
+      spacing(c, 6);
+      c.fillStyle = '#8b93a3';
+      c.fillText('VELOCIDAD', 48, 150);
+      c.fillText('APERTURA', 564, 150);
+      c.fillText('ISO', 48, 400);
+      c.fillText('EXPOSICIÓN', 380, 400);
+      c.fillStyle = '#cdd2dc';
+      c.font = '600 76px "Instrument Sans Variable", sans-serif';
+      spacing(c, 2);
+      c.fillText('400', 44, 480);
+      for (let i = 0; i <= 12; i++) c.fillRect(384 + i * 46, i % 3 ? 476 : 462, 4, i % 3 ? 16 : 30);
+      c.fillStyle = '#e2a7a0';
+      c.beginPath();
+      c.moveTo(384 + 6 * 46 + 2, 452);
+      c.lineTo(384 + 6 * 46 - 12, 430);
+      c.lineTo(384 + 6 * 46 + 16, 430);
+      c.fill();
+      c.strokeStyle = 'rgba(205,210,220,0.25)';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(44, 330);
+      c.lineTo(980, 330);
+      c.moveTo(44, 560);
+      c.lineTo(980, 560);
+      c.stroke();
+      c.fillStyle = '#8b93a3';
+      c.font = '600 28px "Instrument Sans Variable", sans-serif';
+      spacing(c, 6);
+      c.fillText('ASTOR  24–70 mm', 44, 600);
+      c.fillText('82%', 900, 600);
+    },
+    true,
+  );
+  backTex.wrapS = backTex.wrapT = THREE.ClampToEdgeWrapping;
+  // Letrero del modelo al frente.
+  const badgeTex = canvasTex(
+    512,
+    128,
+    (c) => {
+      c.clearRect(0, 0, 512, 128);
+      c.fillStyle = '#e9ebef';
+      c.textBaseline = 'middle';
+      c.font = '600 74px "Instrument Sans Variable", sans-serif';
+      spacing(c, 6);
+      c.fillText('A', 20, 68);
+      c.fillStyle = '#e2a7a0';
+      c.fillText('1', 82, 68);
+      c.fillStyle = '#e9ebef';
+      c.font = '400 76px "Instrument Serif", serif';
+      c.fillText('R', 134, 66);
+    },
+    true,
+  );
+  badgeTex.wrapS = badgeTex.wrapT = THREE.ClampToEdgeWrapping;
+  // Anillo frontal del lente: el nombre da la vuelta al cristal.
+  const frontRingTex = canvasTex(
+    2048,
+    96,
+    (c) => {
+      c.fillStyle = '#08090c';
+      c.fillRect(0, 0, 2048, 96);
+      c.fillStyle = '#cfd2d9';
+      c.font = '600 50px "Instrument Sans Variable", sans-serif';
+      c.textBaseline = 'middle';
+      spacing(c, 9);
+      c.fillText('ASTOR OPTICS', 60, 50);
+      c.fillText('ZOOM LENS 24–70 mm 1:2.8', 640, 50);
+      c.fillText('Ø82 mm', 1640, 50);
+      c.fillStyle = '#e2a7a0';
+      for (const x of [560, 1560, 1960]) {
+        c.beginPath();
+        c.arc(x, 48, 8, 0, 6.283);
+        c.fill();
+      }
+    },
+    true,
+  );
+
+  // ===== Materiales del modelo =====
+  bodyMat.normalMap = paintN;
+  bodyMat.normalScale.set(0.35, 0.35);
+  paintN.repeat.set(5, 5);
+  rubber.normalMap = leatherN;
+  rubber.normalScale.set(0.9, 0.9);
+  rubber.roughness = 0.82;
+  leatherN.repeat.set(4.2, 4.2);
+  const ribRubber = track(new THREE.MeshPhysicalMaterial({ color: 0x0b0c0e, roughness: 0.74, metalness: 0, sheen: 0.6, sheenRoughness: 0.45, sheenColor: 0x5a5e68, envMapIntensity: 0.8 }));
+  const backMat = track(new THREE.MeshBasicMaterial({ map: backTex, toneMapped: false, color: 0xb8b8b8 }));
+  const seamMat = track(new THREE.MeshStandardMaterial({ color: 0x020203, roughness: 0.9 }));
+  const lcdMat = track(new THREE.MeshPhysicalMaterial({ map: lcdTex, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.1 }));
+  const badgeMat = track(new THREE.MeshStandardMaterial({ map: badgeTex, transparent: true, roughness: 0.4, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+  const frontRingMat = track(new THREE.MeshStandardMaterial({ map: frontRingTex, roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide }));
+  const baffle = track(new THREE.MeshStandardMaterial({ color: 0x08080a, roughness: 0.62, metalness: 0.25, side: THREE.DoubleSide }));
+  const deep = track(new THREE.MeshBasicMaterial({ color: 0x03050b }));
+  // Tratamiento antirreflejante: cada superficie de vidrio devuelve el estudio en su propio color (azul, magenta,
+  // verde, ámbar). Son capas que solo suman reflejo, así se ve el interior del lente a través de ellas.
+  const coat = (r: number, g: number, b: number, rough = 0.03, env = 1) => {
+    const m = track(new THREE.MeshStandardMaterial({ color: new THREE.Color(r, g, b), metalness: 1, roughness: rough, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, envMapIntensity: env }));
+    return m;
+  };
+
+  // ===== Modelo (1 unidad ≈ 52 mm: cuerpo de 151 mm de ancho; el lente apunta a +z; la empuñadura va en -x) =====
   const cam = new THREE.Group();
   const add = (geo: T.BufferGeometry, mat: T.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, parent: T.Object3D = cam) => {
     const m = new THREE.Mesh(track(geo), mat);
     m.position.set(x, y, z);
     m.rotation.set(rx, ry, rz);
-    m.castShadow = true;
+    const solid = !mat.transparent;
+    m.castShadow = solid;
+    m.receiveShadow = solid;
     parent.add(m);
     return m;
   };
   const BW = 2.9;
-  const BH = 1.72;
-  const BD = 0.92;
+  const BH = 1.86;
+  const BD = 1.0;
   const TOP = BH / 2;
-  const LX = 0.16; // eje del lente (un poco hacia el lado contrario a la empuñadura)
-  const LY = -0.08;
+  const LX = 0.2; // eje del lente (un poco hacia el lado contrario a la empuñadura)
+  const LY = -0.06;
 
   // Cuerpo de una sola pieza: el contorno visto desde arriba (con la empuñadura que sale al frente y el hueco
   // para los dedos junto a la montura) se extruye hacia arriba con orillas redondeadas.
@@ -500,9 +637,9 @@ function build(
     sh.closePath();
     return sh;
   };
-  const extrude = (sh: T.Shape, y0: number, y1: number, bevel: number) => {
+  const extrude = (sh: T.Shape, y0: number, y1: number, bevel: number, uvScale = 0.5) => {
     const depth = y1 - y0 - bevel * 2;
-    const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.85, bevelOffset: -bevel * 0.85, bevelSegments: 16, curveSegments: 36 });
+    const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.85, bevelOffset: -bevel * 0.85, bevelSegments: bevel > 0.02 ? 16 : 3, curveSegments: 40 });
     g.translate(0, 0, bevel);
     g.rotateX(-Math.PI / 2);
     g.translate(0, y0, 0);
@@ -511,105 +648,179 @@ function build(
     g.deleteAttribute('uv');
     const m = mergeVertices(g, 1e-4);
     g.dispose();
+    return finishGeo(m, uvScale);
+  };
+  const finishGeo = (m: T.BufferGeometry, uvScale = 0.5) => {
     m.computeVertexNormals();
     const pos = m.getAttribute('position');
     const uv = new Float32Array(pos.count * 2);
     for (let i = 0; i < pos.count; i++) {
-      uv[i * 2] = (pos.getX(i) + pos.getZ(i)) * 0.5;
-      uv[i * 2 + 1] = (pos.getY(i) + pos.getZ(i) * 0.6) * 0.5;
+      uv[i * 2] = (pos.getX(i) + pos.getZ(i)) * uvScale;
+      uv[i * 2 + 1] = (pos.getY(i) + pos.getZ(i) * 0.6) * uvScale;
     }
     m.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     return m;
   };
   const GX = -BW / 2; // orilla de la empuñadura
-  const GZ = BD / 2 + 0.56; // qué tanto sale la empuñadura al frente
-  // Caja principal.
+  const GZ = BD / 2 + 0.62; // qué tanto sale la empuñadura al frente
+  // La empuñadura se esculpe después de extruirla: el hombro baja hacia el frente (ahí va el disparador) y debajo
+  // queda la muesca donde descansa el dedo medio.
+  const sculpt = (g: T.BufferGeometry) => {
+    const p = g.getAttribute('position') as T.BufferAttribute;
+    for (let i = 0; i < p.count; i++) {
+      let x = p.getX(i);
+      let y = p.getY(i);
+      let zz = p.getZ(i);
+      const up = smooth(TOP - 0.62, TOP - 0.02, y);
+      const fw = Math.max(0, zz - 0.12);
+      y -= up * fw * 0.34;
+      const band = Math.exp(-(((y - (TOP - 0.66)) / 0.17) ** 2));
+      const inner = smooth(GX + 0.45, GX + 1.05, x) * smooth(0.5, 0.95, zz);
+      zz -= band * inner * 0.13;
+      x -= band * inner * 0.07;
+      // La base se mete un poco (las cámaras no bajan a plomo).
+      const low = 1 - smooth(-BH / 2, -BH / 2 + 0.5, y);
+      zz -= low * Math.max(0, zz - 0.3) * 0.12;
+      p.setXYZ(i, x, y, zz);
+    }
+    return finishGeo(g);
+  };
+  const mainPts = (g: number): [number, number, number][] => [
+    [GX + 0.2 - g, -BD / 2 - g, 0.2],
+    [BW / 2 + g, -BD / 2 - g, 0.24],
+    [BW / 2 + g, BD / 2 + g, 0.3],
+    [GX + 0.2 - g, BD / 2 + g, 0.2],
+  ];
+  // Caja principal y la junta de la tapa superior (una línea oscura que da la vuelta).
+  add(extrude(outline(mainPts(0)), -BH / 2, TOP, 0.13), bodyMat);
+  add(extrude(outline(mainPts(0.003)), TOP - 0.215, TOP - 0.2, 0.002), seamMat);
+  add(extrude(outline(mainPts(0.003)), -BH / 2 + 0.1, -BH / 2 + 0.112, 0.002), seamMat);
+  // Empuñadura.
   add(
-    extrude(
-      outline([
-        [GX + 0.2, -BD / 2, 0.22],
-        [BW / 2, -BD / 2, 0.22],
-        [BW / 2, BD / 2, 0.22],
-        [GX + 0.2, BD / 2, 0.22],
-      ]),
-      -BH / 2,
-      TOP,
-      0.16,
-    ),
-    bodyMat,
-  );
-  // Empuñadura: sale al frente, deja el hueco para los dedos junto a la montura y tiene la orilla de arriba
-  // muy redondeada (como se moldea el plástico de una réflex).
-  add(
-    extrude(
-      outline([
-        [GX + 1.12, BD / 2 - 0.1, 0.1],
-        [GX + 0.9, GZ, 0.34],
-        [GX + 0.04, GZ - 0.06, 0.36],
-        [GX - 0.02, BD / 2 - 0.12, 0.3],
-        [GX - 0.02, -BD / 2 + 0.1, 0.22],
-        [GX + 1.12, -BD / 2 + 0.1, 0.1],
-      ]),
-      -BH / 2,
-      TOP - 0.02,
-      0.28,
+    sculpt(
+      extrude(
+        outline([
+          [GX + 1.14, BD / 2 - 0.1, 0.1],
+          [GX + 0.93, GZ, 0.36],
+          [GX + 0.03, GZ - 0.07, 0.4],
+          [GX - 0.03, BD / 2 - 0.12, 0.3],
+          [GX - 0.03, -BD / 2 + 0.1, 0.22],
+          [GX + 1.14, -BD / 2 + 0.1, 0.1],
+        ]),
+        -BH / 2,
+        TOP - 0.02,
+        0.24,
+      ),
     ),
     bodyMat,
   );
   // Hule de la empuñadura: la misma forma un pelito más grande, solo en la parte de agarre.
   add(
-    extrude(
-      outline([
-        [GX + 1.09, BD / 2 - 0.05, 0.1],
-        [GX + 0.912, GZ + 0.016, 0.35],
-        [GX + 0.03, GZ - 0.045, 0.37],
-        [GX - 0.036, BD / 2 - 0.12, 0.31],
-        [GX - 0.036, -BD / 2 + 0.12, 0.2],
-        [GX + 0.8, -BD / 2 + 0.12, 0.1],
-      ]),
-      -BH / 2 + 0.06,
-      TOP - 0.3,
-      0.2,
+    sculpt(
+      extrude(
+        outline([
+          [GX + 1.1, BD / 2 - 0.04, 0.1],
+          [GX + 0.944, GZ + 0.016, 0.37],
+          [GX + 0.018, GZ - 0.054, 0.41],
+          [GX - 0.046, BD / 2 - 0.12, 0.31],
+          [GX - 0.046, -BD / 2 + 0.14, 0.2],
+          [GX + 0.7, -BD / 2 + 0.14, 0.1],
+        ]),
+        -BH / 2 + 0.07,
+        TOP - 0.36,
+        0.16,
+      ),
     ),
     rubber,
   );
-  add(new THREE.CylinderGeometry(0.86, 0.9, 0.16, 96), bodyMat, LX, LY, BD / 2 + 0.06, Math.PI / 2);
-  add(new RoundedBoxGeometry(0.5, BH * 0.62, 0.3, 6, 0.14), rubber, -BW / 2 + 0.26, -0.12, -BD / 2 - 0.02); // apoyo del pulgar
-  add(new RoundedBoxGeometry(0.06, BH * 0.62, BD * 0.66, 4, 0.025), rubber, BW / 2 + 0.005, -0.08, 0.02); // tapa de puertos con hule
-  add(new RoundedBoxGeometry(0.12, 0.2, 0.04, 4, 0.03), lamp, GX + 1.2, TOP - 0.34, BD / 2 + 0.005); // luz del autodisparador
-  // Botón de previsualización de profundidad al frente y orificios del micrófono arriba.
-  add(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 28), plastic, LX + 0.9, LY - 0.36, BD / 2 + 0.02, Math.PI / 2);
-  for (let i = 0; i < 3; i++) add(new THREE.CircleGeometry(0.018, 12), void_, -BW * 0.27 - 0.06 + i * 0.06, TOP + 0.003, 0.24, -Math.PI / 2);
+  // Piel del otro lado: envuelve la esquina del frente y el costado.
+  add(
+    extrude(
+      outline([
+        [LX + 1.0, BD / 2 + 0.012, 0.03],
+        [BW / 2 + 0.012, BD / 2 + 0.012, 0.31],
+        [BW / 2 + 0.012, -BD / 2 + 0.2, 0.03],
+        [BW / 2 - 0.12, -BD / 2 + 0.2, 0.02],
+        [BW / 2 - 0.12, BD / 2 - 0.12, 0.2],
+        [LX + 1.0, BD / 2 - 0.12, 0.02],
+      ]),
+      -BH / 2 + 0.16,
+      TOP - 0.3,
+      0.02,
+    ),
+    rubber,
+  );
+  // Garganta de la montura: el cuerpo se abulta alrededor del lente.
+  const collar = new THREE.LatheGeometry(
+    [
+      [0.9, 0],
+      [0.885, 0.06],
+      [0.84, 0.115],
+      [0.76, 0.13],
+      [0.6, 0.13],
+    ].map(([r, y]) => new THREE.Vector2(r, y)),
+    128,
+  );
+  add(collar, bodyMat, LX, LY, BD / 2 - 0.02, Math.PI / 2);
+  add(new RoundedBoxGeometry(0.44, BH * 0.5, 0.2, 6, 0.09), rubber, -BW / 2 + 0.27, -0.2, -BD / 2 + 0.01); // apoyo del pulgar
+  add(new RoundedBoxGeometry(0.03, BH * 0.52, BD * 0.42, 4, 0.012), ribRubber, BW / 2 + 0.004, -0.12, -0.2); // tapa de puertos
+  add(new RoundedBoxGeometry(0.1, 0.18, 0.04, 4, 0.018), lamp, GX + 1.22, TOP - 0.36, BD / 2 + 0.005); // luz del autodisparador
+  // Botón de previsualización de profundidad y botón para soltar el lente, a los lados de la montura.
+  add(new THREE.CylinderGeometry(0.065, 0.065, 0.05, 28), plastic, LX + 1.0, LY - 0.5, BD / 2 + 0.03, Math.PI / 2);
+  add(new THREE.CylinderGeometry(0.11, 0.12, 0.08, 36), plastic, LX + 1.02, LY + 0.12, BD / 2 + 0.03, Math.PI / 2);
+  add(new THREE.TorusGeometry(0.115, 0.012, 8, 36), chrome, LX + 1.02, LY + 0.12, BD / 2 + 0.012);
+  const badge = add(new THREE.PlaneGeometry(0.44, 0.11), badgeMat, BW / 2 - 0.42, TOP - 0.12, BD / 2 + 0.003);
+  badge.castShadow = false;
+  for (let i = 0; i < 3; i++) add(new THREE.CircleGeometry(0.016, 12), void_, -BW * 0.27 - 0.06 + i * 0.06, TOP + 0.003, 0.3, -Math.PI / 2);
 
-  // Pentaprisma: caja redondeada que se angosta hacia arriba y con el frente inclinado hacia atrás.
-  const PW = 1.56;
-  const PH = 0.7;
-  const PD = BD * 0.84;
-  const SLOPE = 0.2; // cuánto se va hacia atrás el frente en la parte de arriba
-  const prismGeo = new RoundedBoxGeometry(PW, PH, PD, 8, 0.12);
+  // Pentaprisma: se angosta hacia arriba, el frente se inclina hacia atrás y vuela un poco sobre la montura.
+  const PW = 1.72;
+  const PH = 0.72;
+  const PD = BD + 0.08;
+  const PZ = 0.07;
+  const SLOPE = 0.3; // cuánto se va hacia atrás el frente en la parte de arriba
+  const prismGeo = new RoundedBoxGeometry(PW, PH, PD, 10, 0.13);
   const pp = prismGeo.getAttribute('position') as T.BufferAttribute;
   for (let i = 0; i < pp.count; i++) {
-    const t = (pp.getY(i) + PH / 2) / PH;
-    pp.setX(i, pp.getX(i) * (1 - 0.4 * t));
+    const t = Math.min(1, Math.max(0, (pp.getY(i) + PH / 2) / PH));
+    pp.setX(i, pp.getX(i) * (1 - 0.44 * Math.pow(t, 1.15)));
     const zz = pp.getZ(i);
-    // Solo el frente se inclina; la espalda queda recta.
-    pp.setZ(i, zz > 0 ? zz - SLOPE * t * (zz / (PD / 2)) : zz);
+    pp.setZ(i, zz > 0 ? zz - SLOPE * t * (zz / (PD / 2)) : zz + 0.06 * t * (-zz / (PD / 2)));
   }
   prismGeo.computeVertexNormals();
-  const PY = TOP + PH / 2 - 0.1;
-  add(prismGeo, bodyMat, LX, PY, -0.02);
-  const LT = 0.5; // altura (0–1) donde va el logo
-  const logo = add(new THREE.PlaneGeometry(0.84, 0.21), logoMat, LX, PY - PH / 2 + PH * LT, -0.02 + PD / 2 - SLOPE * LT + 0.006, -Math.atan(SLOPE / PH));
+  const PY = TOP + PH / 2 - 0.13;
+  add(prismGeo, bodyMat, LX, PY, PZ);
+  const LT = 0.56; // altura (0–1) donde va el logo
+  const logo = add(new THREE.PlaneGeometry(0.8, 0.2), logoMat, LX, PY - PH / 2 + PH * LT, PZ + PD / 2 - SLOPE * LT + 0.005, -Math.atan(SLOPE / PH));
   logo.castShadow = false;
-  add(new RoundedBoxGeometry(0.5, 0.05, 0.44, 3, 0.02), chrome, LX, PY + PH / 2 + 0.01, -0.1); // zapata
-  add(new RoundedBoxGeometry(0.42, 0.06, 0.38, 3, 0.02), darkMetal, LX, PY + PH / 2 - 0.02, -0.1);
-  add(new RoundedBoxGeometry(0.72, 0.5, 0.34, 8, 0.16), rubber, LX, TOP + 0.24, -BD / 2 - 0.18); // ocular
+  // Zapata: base, dos rieles con ceja y contactos.
+  const SY = PY + PH / 2;
+  add(new RoundedBoxGeometry(0.52, 0.03, 0.5, 2, 0.01), darkMetal, LX, SY + 0.005, -0.06);
+  for (const s of [-1, 1]) {
+    add(new RoundedBoxGeometry(0.05, 0.07, 0.48, 2, 0.01), chrome, LX + s * 0.235, SY + 0.04, -0.06);
+    add(new RoundedBoxGeometry(0.11, 0.016, 0.48, 2, 0.006), chrome, LX + s * 0.2, SY + 0.076, -0.06);
+  }
+  add(new THREE.CylinderGeometry(0.035, 0.035, 0.012, 20), chrome, LX, SY + 0.022, -0.06);
+  for (const s of [-1, 1]) add(new THREE.CylinderGeometry(0.016, 0.016, 0.012, 12), chrome, LX + s * 0.08, SY + 0.022, -0.2);
+  // Ocular de hule con su cristal.
+  add(new RoundedBoxGeometry(0.8, 0.54, 0.26, 8, 0.12), ribRubber, LX, TOP + 0.2, -BD / 2 - 0.1);
+  add(new RoundedBoxGeometry(0.4, 0.26, 0.03, 4, 0.012), screen, LX, TOP + 0.2, -BD / 2 - 0.222);
 
-  // Lado de la empuñadura arriba: pantallita superior, dial principal y disparador con su anillo.
-  add(new RoundedBoxGeometry(0.62, 0.02, 0.4, 2, 0.008), screen, -BW * 0.27, TOP + 0.005, -0.12);
-  add(new THREE.CylinderGeometry(0.17, 0.17, 0.14, 64), knurlMat, -BW / 2 + 0.52, TOP - 0.03, BD / 2 + 0.1, 0, 0, Math.PI / 2); // rueda a medio hundir
-  add(new THREE.CylinderGeometry(0.15, 0.16, 0.06, 48), darkMetal, -BW / 2 + 0.48, TOP, BD / 2 + 0.26);
-  add(new THREE.CylinderGeometry(0.1, 0.1, 0.07, 40), chrome, -BW / 2 + 0.48, TOP + 0.05, BD / 2 + 0.26);
+  // Lado de la empuñadura arriba: pantalla superior, dial principal y disparador con su anillo (sobre el hombro inclinado).
+  add(new RoundedBoxGeometry(0.66, 0.02, 0.42, 2, 0.008), darkMetal, -BW * 0.27, TOP + 0.002, -0.14);
+  const lcd = add(new THREE.PlaneGeometry(0.58, 0.34), lcdMat, -BW * 0.27, TOP + 0.014, -0.14, -Math.PI / 2);
+  lcd.castShadow = false;
+  const TILT = Math.atan(0.34);
+  const SHX = GX + 0.5;
+  const SHZ = BD / 2 + 0.34;
+  const SHY = TOP - 0.02 - (SHZ - 0.12) * 0.34;
+  const sh = new THREE.Group();
+  sh.position.set(SHX, SHY, SHZ);
+  sh.rotation.x = TILT;
+  cam.add(sh);
+  add(new THREE.CylinderGeometry(0.17, 0.185, 0.05, 48), darkMetal, 0, 0.02, 0, 0, 0, 0, sh);
+  add(new THREE.CylinderGeometry(0.125, 0.125, 0.05, 48), chrome, 0, 0.05, 0, 0, 0, 0, sh);
+  add(new THREE.SphereGeometry(0.2, 32, 12, 0, Math.PI * 2, 0, 0.6), plastic, 0, 0.078 - 0.2 * Math.cos(0.6), 0, 0, 0, 0, sh);
 
   // Cubierta de arriba del lado derecho: letreros impresos, botones DISP / ISO y palanca de encendido.
   const deck = add(new THREE.PlaneGeometry(1.04, 0.78), deckMat, BW * 0.3, TOP + 0.003, 0.02, -Math.PI / 2);
@@ -618,133 +829,221 @@ function build(
   add(new RoundedBoxGeometry(0.17, 0.05, 0.1, 3, 0.02), plastic, BW * 0.3 + 0.42, TOP + 0.02, 0.13);
   add(new RoundedBoxGeometry(0.2, 0.04, 0.07, 3, 0.02), plastic, BW * 0.3 - 0.26, TOP + 0.02, 0.32, 0, 0.35);
   add(new THREE.SphereGeometry(0.018, 10, 8), white, BW * 0.32 - 0.36, TOP + 0.01, -0.04); // marca del dial
+
+  // Anillos estriados de verdad (dientes en la geometría, no en una textura): hule del zoom y del enfoque, diales.
+  const ribGeo = (r: number, len: number, ribs: number, depth: number) => {
+    const seg = ribs * 4;
+    const rows = [0, 0.022, 0.05, len - 0.05, len - 0.022, len];
+    const g = new THREE.CylinderGeometry(r, r, len, seg, rows.length - 1, true);
+    const p = g.getAttribute('position') as T.BufferAttribute;
+    for (let j = 0; j < rows.length; j++)
+      for (let i = 0; i <= seg; i++) {
+        const k = j * (seg + 1) + i;
+        const tooth = i % 4 < 2 ? 0 : 1;
+        const end = j === 0 || j === rows.length - 1;
+        const rr = end ? r - depth - 0.012 : j === 1 || j === rows.length - 2 ? r - depth * (0.4 + 0.6 * tooth) - 0.004 : r - depth * tooth;
+        const a = (i / seg) * Math.PI * 2;
+        // La fila 0 del cilindro es la de arriba.
+        p.setXYZ(k, Math.sin(a) * rr, len / 2 - rows[j], Math.cos(a) * rr);
+      }
+    g.computeVertexNormals();
+    return g;
+  };
   // Lado contrario: dial de modos grabado con estrías y seguro al centro.
   const dial = new THREE.Group();
-  dial.position.set(BW * 0.32, TOP + 0.09, -0.04);
+  dial.position.set(BW * 0.32, TOP + 0.1, -0.04);
   cam.add(dial);
-  add(new THREE.CylinderGeometry(0.33, 0.33, 0.18, 96), knurlMat, 0, 0, 0, 0, 0, 0, dial);
-  add(new THREE.CircleGeometry(0.31, 96), dialMat, 0, 0.092, 0, -Math.PI / 2, 0, 0, dial);
-  add(new THREE.CylinderGeometry(0.08, 0.08, 0.04, 32), chrome, 0, 0.11, 0, 0, 0, 0, dial);
-
-  // Montura: aro cromado, punto de alineación y botón para soltar el lente.
-  add(new THREE.TorusGeometry(0.7, 0.035, 20, 96), chrome, LX, LY, BD / 2 + 0.15);
-  add(new THREE.SphereGeometry(0.04, 16, 12), accent, LX + 0.2, LY + 0.76, BD / 2 + 0.14);
-  add(new THREE.CylinderGeometry(0.09, 0.09, 0.06, 32), chrome, LX + 0.86, LY + 0.14, BD / 2 + 0.03, Math.PI / 2);
+  add(ribGeo(0.34, 0.2, 56, 0.014), darkMetal, 0, 0, 0, 0, 0, 0, dial);
+  add(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 48), darkMetal, 0, -0.004, 0, 0, 0, 0, dial);
+  add(new THREE.CircleGeometry(0.325, 96), dialMat, 0, 0.101, 0, -Math.PI / 2, 0, 0, dial);
+  add(new THREE.CylinderGeometry(0.085, 0.085, 0.04, 32), chrome, 0, 0.115, 0, 0, 0, 0, dial);
+  // Dial principal detrás del disparador (rueda a medio hundir).
+  add(ribGeo(0.16, 0.14, 30, 0.014), darkMetal, GX + 0.5, TOP - 0.115, BD / 2 - 0.06, 0, 0, Math.PI / 2);
+  add(new THREE.CylinderGeometry(0.14, 0.14, 0.14, 30), darkMetal, GX + 0.5, TOP - 0.115, BD / 2 - 0.06, 0, 0, Math.PI / 2);
 
   // Atrás: pantalla grande con marco, botones y rueda.
-  add(new RoundedBoxGeometry(1.7, 1.12, 0.06, 4, 0.04), darkMetal, 0.28, -0.14, -BD / 2 - 0.01);
-  add(new RoundedBoxGeometry(1.6, 1.02, 0.03, 4, 0.03), screen, 0.28, -0.14, -BD / 2 - 0.045);
-  add(new THREE.TorusGeometry(0.19, 0.04, 16, 48), knurlMat, -BW / 2 + 0.62, -0.2, -BD / 2 - 0.02);
+  add(new RoundedBoxGeometry(1.74, 1.16, 0.06, 4, 0.028), darkMetal, 0.3, -0.16, -BD / 2 - 0.01);
+  add(new RoundedBoxGeometry(1.64, 1.06, 0.03, 4, 0.014), screen, 0.3, -0.16, -BD / 2 - 0.045);
+  const back = add(new THREE.PlaneGeometry(1.5, 0.94), backMat, 0.3, -0.16, -BD / 2 - 0.0612, 0, Math.PI, 0);
+  back.castShadow = back.receiveShadow = false;
+  add(ribGeo(0.23, 0.06, 40, 0.012), darkMetal, -BW / 2 + 0.64, -0.24, -BD / 2 - 0.03, Math.PI / 2);
+  add(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 40), plastic, -BW / 2 + 0.64, -0.24, -BD / 2 - 0.03, Math.PI / 2);
+  add(new THREE.CylinderGeometry(0.085, 0.085, 0.08, 28), plastic, -BW / 2 + 0.64, -0.24, -BD / 2 - 0.035, Math.PI / 2);
   for (const [x, y] of [
-    [-BW / 2 + 0.62, 0.32],
-    [-BW / 2 + 0.38, 0.62],
-    [-BW / 2 + 0.66, 0.62],
+    [-BW / 2 + 0.64, 0.32],
+    [-BW / 2 + 0.4, 0.66],
+    [-BW / 2 + 0.7, 0.66],
   ])
-    add(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 24), darkMetal, x, y, -BD / 2 - 0.02, Math.PI / 2);
+    add(new THREE.CylinderGeometry(0.075, 0.075, 0.05, 24), plastic, x, y, -BD / 2 - 0.02, Math.PI / 2);
 
-  // Zoom: anillos con un perfil torneado (bordes biselados).
+  // ===== Zoom 24–70 f/2.8 (88 mm de diámetro): barril torneado, más ancho hacia el frente =====
   const lens = new THREE.Group();
-  lens.position.set(LX, LY, BD / 2 + 0.14);
+  const ZM = BD / 2 + 0.11;
+  lens.position.set(LX, LY, ZM);
   cam.add(lens);
-  const ring = (r: number, len: number, z: number, mat: T.Material, bevel = 0.02, seg = 96) => {
-    const pts = [
-      new THREE.Vector2(r - 0.06, 0),
-      new THREE.Vector2(r - bevel, 0),
-      new THREE.Vector2(r, bevel),
-      new THREE.Vector2(r, len - bevel),
-      new THREE.Vector2(r - bevel, len),
-      new THREE.Vector2(r - 0.06, len),
-    ];
-    return add(new THREE.LatheGeometry(pts, seg), mat, 0, 0, z, Math.PI / 2, 0, 0, lens);
+  const lathe = (pts: [number, number][], mat: T.Material, z0 = 0, seg = 128) =>
+    add(new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg), mat, 0, 0, z0, Math.PI / 2, 0, 0, lens);
+  /** Tramo del barril de radio r0 a r1 con las orillas biseladas. */
+  const ring = (r0: number, r1: number, len: number, z0: number, mat: T.Material, bevel = 0.014) =>
+    lathe(
+      [
+        [r0 - 0.07, 0],
+        [r0 - bevel, 0],
+        [r0, bevel],
+        [r1, len - bevel],
+        [r1 - bevel, len],
+        [r1 - 0.07, len],
+      ],
+      mat,
+      z0,
+    );
+  const ribbedRing = (r: number, len: number, z0: number, ribs: number) => {
+    add(ribGeo(r, len, ribs, 0.02), ribRubber, 0, 0, z0 + len / 2, Math.PI / 2, 0, 0, lens);
+    ring(r - 0.03, r - 0.03, len, z0, barrel, 0.004);
   };
-  const tube = (r: number, len: number, z: number, mat: T.Material) =>
-    add(new THREE.CylinderGeometry(r, r, len, 96, 1, true), mat, 0, 0, z + len / 2, Math.PI / 2, 0, 0, lens);
   let z = 0;
-  ring(0.64, 0.12, z, darkMetal); // bayoneta
-  z += 0.12;
-  ring(0.61, 0.3, z, barrel);
-  tube(0.612, 0.16, z + 0.08, barrelPrint); // letras
+  ring(0.7, 0.7, 0.07, z, chrome, 0.01); // bayoneta
+  z += 0.07;
+  ring(0.69, 0.745, 0.34, z, barrel);
   // Interruptores AF/MF y estabilizador del lado de la empuñadura.
-  const sw = add(new RoundedBoxGeometry(0.05, 0.3, 0.34, 3, 0.02), barrel, -0.6, 0.16, z + 0.15, 0, 0, -0.26, lens);
-  add(new THREE.PlaneGeometry(0.32, 0.28), switchMat, -0.028, 0, 0, 0, -Math.PI / 2, 0, sw);
-  add(new RoundedBoxGeometry(0.04, 0.06, 0.07, 2, 0.015), plastic, -0.04, 0.07, 0.1, 0, 0, 0, sw);
-  add(new RoundedBoxGeometry(0.04, 0.06, 0.07, 2, 0.015), plastic, -0.04, -0.07, -0.08, 0, 0, 0, sw);
-  add(new THREE.SphereGeometry(0.022, 12, 8), accent, 0, 0.63, 0.06, 0, 0, 0, lens); // punto para montar
-  z += 0.3;
-  ring(0.65, 0.56, z, ribbed, 0.03); // anillo de zoom
-  z += 0.56;
-  ring(0.625, 0.05, z, accent, 0.008); // anillo de acento
+  const sw = add(new RoundedBoxGeometry(0.05, 0.3, 0.3, 3, 0.02), barrel, -0.7, 0.18, z + 0.17, 0, 0.16, -0.25, lens);
+  add(new THREE.PlaneGeometry(0.28, 0.28), switchMat, -0.028, 0, 0, 0, -Math.PI / 2, 0, sw);
+  add(new RoundedBoxGeometry(0.04, 0.06, 0.07, 2, 0.015), plastic, -0.04, 0.07, 0.09, 0, 0, 0, sw);
+  add(new RoundedBoxGeometry(0.04, 0.06, 0.07, 2, 0.015), plastic, -0.04, -0.07, -0.07, 0, 0, 0, sw);
+  add(new THREE.SphereGeometry(0.026, 12, 8), accent, 0, 0.7, 0.07, 0, 0, 0, lens); // punto para montar
+  z += 0.34;
+  ribbedRing(0.8, 0.6, z, 104); // anillo de zoom
+  z += 0.6;
+  ring(0.775, 0.775, 0.05, z, barrel, 0.006);
   z += 0.05;
-  ring(0.61, 0.18, z, barrel);
-  z += 0.18;
-  ring(0.63, 0.3, z, ribbed, 0.025); // enfoque
-  z += 0.3;
-  ring(0.66, 0.14, z, barrel, 0.03);
-  z += 0.14;
-  // Parasol de pétalos (como el de un 24–70): largo arriba y abajo, recortado a los lados; por dentro, afelpado.
-  const HOOD = 0.62;
-  const hoodGeo = new THREE.CylinderGeometry(0.9, 0.68, HOOD, 128, 8, true);
+  ring(0.79, 0.79, 0.045, z, accent, 0.008); // anillo de acento
+  z += 0.045;
+  ring(0.775, 0.78, 0.22, z, barrel, 0.006);
+  add(new THREE.CylinderGeometry(0.781, 0.781, 0.13, 128, 1, true), barrelPrint, 0, 0, z + 0.11, Math.PI / 2, 0, 0, lens); // letras
+  z += 0.22;
+  ribbedRing(0.81, 0.36, z, 120); // enfoque
+  z += 0.36;
+  ring(0.8, 0.84, 0.16, z, barrel, 0.02);
+  z += 0.16;
+  const ZF = z; // frente del barril (donde entra el parasol)
+  // Parasol de pétalos: largo arriba y abajo, recortado a los lados; por dentro, estrías que matan el reflejo.
+  const HOOD = 0.5;
+  const HR0 = 0.86;
+  const HR1 = 0.955;
+  const hoodGeo = new THREE.CylinderGeometry(HR1, HR0, HOOD, 160, 10, true);
   const hp = hoodGeo.getAttribute('position') as T.BufferAttribute;
-  const petal = (th: number) => -0.3 * Math.pow(Math.abs(Math.sin(th)), 2);
+  const petal = (th: number) => -0.26 * Math.pow(Math.abs(Math.sin(th)), 2.4);
   for (let i = 0; i < hp.count; i++) {
     const t = (hp.getY(i) + HOOD / 2) / HOOD;
     const th = Math.atan2(hp.getX(i), hp.getZ(i));
     hp.setY(i, hp.getY(i) + petal(th) * t * t);
   }
   hoodGeo.computeVertexNormals();
-  const hoodOut = track(new THREE.MeshPhysicalMaterial({ color: 0x0e0f12, roughness: 0.48, clearcoat: 0.25, clearcoatRoughness: 0.5, bumpMap: grain, bumpScale: 0.2, envMapIntensity: 0.75 }));
-  add(hoodGeo, hoodOut, 0, 0, z + HOOD / 2, Math.PI / 2, 0, 0, lens);
-  add(hoodGeo.clone(), flock, 0, 0, z + HOOD / 2, Math.PI / 2, 0, 0, lens);
+  const hoodOut = track(new THREE.MeshPhysicalMaterial({ color: 0x0c0d10, roughness: 0.56, clearcoat: 0.12, clearcoatRoughness: 0.6, normalMap: paintN, normalScale: new THREE.Vector2(0.3, 0.3), envMapIntensity: 0.7 }));
+  add(hoodGeo, hoodOut, 0, 0, z + HOOD / 2 - 0.02, Math.PI / 2, 0, 0, lens);
+  const hoodIn = hoodGeo.clone();
+  hoodIn.scale(0.985, 1, 0.985);
+  add(hoodIn, flock, 0, 0, z + HOOD / 2 - 0.02, Math.PI / 2, 0, 0, lens);
+  ring(HR0 + 0.004, HR0 + 0.012, 0.09, z - 0.03, barrel, 0.01); // aro de la bayoneta del parasol
   // Borde que sigue los pétalos (mismo giro que la geometría del parasol: su eje y queda en el z del lente).
-  const rimPts = Array.from({ length: 160 }, (_, i) => {
-    const th = (i / 160) * Math.PI * 2;
-    return new V(0.9 * Math.sin(th), -0.9 * Math.cos(th), z + HOOD + petal(th));
+  const rimPts = Array.from({ length: 200 }, (_, i) => {
+    const th = (i / 200) * Math.PI * 2;
+    return new V((HR1 - 0.008) * Math.sin(th), -(HR1 - 0.008) * Math.cos(th), z + HOOD - 0.02 + petal(th));
   });
-  add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rimPts, true), 320, 0.016, 8, true), barrel, 0, 0, 0, 0, 0, 0, lens);
-  add(new THREE.SphereGeometry(0.02, 10, 8), white, 0, 0.665, z + 0.04, 0, 0, 0, lens); // marca de bayoneta del parasol
-  // Cristal: anillo con el nombre, lente frontal abombada con tratamiento, un elemento interior y fondo oscuro.
-  const zg = z - 0.02;
-  add(new THREE.RingGeometry(0.5, 0.64, 96), ringMat, 0, 0, zg + 0.005, 0, 0, 0, lens);
-  const R = 0.9;
-  const theta = Math.asin(0.5 / R);
-  add(new THREE.SphereGeometry(R, 96, 24, 0, Math.PI * 2, 0, theta), glass, 0, 0, zg - R * Math.cos(theta), Math.PI / 2, 0, 0, lens);
-  add(new THREE.SphereGeometry(0.5, 64, 16, 0, Math.PI * 2, 0, 0.6), innerGlass, 0, 0, zg - 0.38 - 0.5 * Math.cos(0.6), Math.PI / 2, 0, 0, lens);
-  add(new THREE.SphereGeometry(0.42, 64, 16, 0, Math.PI * 2, 0, 0.5), innerGlass, 0, 0, zg - 0.62 - 0.42 * Math.cos(0.5), Math.PI / 2, 0, 0, lens);
-  // Retenes de los elementos (anillos negros) y el diafragma de 9 hojas.
-  add(new THREE.RingGeometry(0.44, 0.5, 64), iris, 0, 0, zg - 0.3, 0, 0, 0, lens);
-  add(new THREE.RingGeometry(0.36, 0.44, 64), iris, 0, 0, zg - 0.56, 0, 0, 0, lens);
+  add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rimPts, true), 400, 0.014, 8, true), barrel, 0, 0, 0, 0, 0, 0, lens);
+  add(new THREE.SphereGeometry(0.02, 10, 8), white, 0, HR0 + 0.012, z + 0.02, 0, 0, 0, lens); // marca de bayoneta del parasol
+
+  // Frente del lente: rosca del filtro, anillo con el nombre, y el cristal con su interior (deflectores escalonados,
+  // elementos y diafragma). Todo se mide desde ZF hacia adentro.
+  lathe(
+    [
+      [0.84, 0],
+      [0.8, 0],
+      [0.8, -0.05],
+    ],
+    baffle,
+    ZF,
+  );
+  lathe(
+    [
+      [0.8, -0.05],
+      [0.645, -0.13],
+    ],
+    frontRingMat,
+    ZF,
+    160,
+  );
+  lathe(
+    [
+      [0.645, -0.13],
+      [0.63, -0.15],
+      [0.63, -0.26],
+      [0.52, -0.3],
+      [0.52, -0.44],
+      [0.49, -0.46],
+      [0.49, -0.62],
+      [0.42, -0.66],
+      [0.42, -0.84],
+      [0.34, -0.88],
+      [0.34, -1.04],
+      [0.31, -1.06],
+      [0.31, -1.2],
+    ],
+    baffle,
+    ZF,
+  );
+  /** Casquete esférico (superficie de un elemento de vidrio) de abertura a, con el vértice en zApex. */
+  const cap = (R: number, a: number, zApex: number, mat: T.Material, convex = true) => {
+    const th = Math.asin(Math.min(0.999, a / R));
+    const m = add(new THREE.SphereGeometry(R, 96, 28, 0, Math.PI * 2, 0, th), mat, 0, 0, ZF + zApex + (convex ? -R : R), convex ? Math.PI / 2 : -Math.PI / 2, 0, 0, lens);
+    m.castShadow = m.receiveShadow = false;
+    return m;
+  };
+  const coatBack = (r: number, g: number, b: number, rough = 0.04, env = 1) => {
+    const m = coat(r, g, b, rough, env);
+    m.side = THREE.BackSide;
+    return m;
+  };
+  cap(1.18, 0.63, -0.1, coat(0.15, 0.18, 0.26, 0.02, 1)); // elemento frontal: el reflejo grande y frío del estudio
+  cap(2.4, 0.62, -0.25, coatBack(0.17, 0.04, 0.15, 0.03)); // su cara de atrás, magenta
+  cap(0.82, 0.5, -0.36, coat(0.045, 0.13, 0.075, 0.035, 0.8)); // segundo elemento, verde
+  cap(1.3, 0.48, -0.6, coatBack(0.22, 0.12, 0.035, 0.05)); // ámbar
+  cap(0.6, 0.4, -0.72, coat(0.09, 0.06, 0.16, 0.045, 0.8)); // violeta, al fondo
+  cap(0.7, 0.32, -0.95, coat(0.04, 0.12, 0.17, 0.05)); // justo antes del diafragma
+  // Diafragma de 9 hojas y el fondo.
   const irisShape = new THREE.Shape();
-  irisShape.absarc(0, 0, 0.44, 0, Math.PI * 2, false);
+  irisShape.absarc(0, 0, 0.34, 0, Math.PI * 2, false);
   const hole = new THREE.Path();
+  const IR = 0.15;
   for (let i = 0; i <= 9; i++) {
     const a = (i / 9) * Math.PI * 2 + 0.2;
-    if (i === 0) hole.moveTo(Math.cos(a) * 0.2, Math.sin(a) * 0.2);
-    else hole.lineTo(Math.cos(a) * 0.2, Math.sin(a) * 0.2);
+    if (i === 0) hole.moveTo(Math.cos(a) * IR, Math.sin(a) * IR);
+    else hole.lineTo(Math.cos(a) * IR, Math.sin(a) * IR);
   }
   irisShape.holes.push(hole);
-  add(new THREE.ShapeGeometry(irisShape, 48), iris, 0, 0, zg - 0.68, 0, 0, 0, lens);
+  add(new THREE.ShapeGeometry(irisShape, 48), iris, 0, 0, ZF - 1.08, 0, 0, 0, lens);
   for (let i = 0; i < 9; i++) {
     const a = (i / 9) * Math.PI * 2 + 0.2;
-    const blade = add(new THREE.PlaneGeometry(0.24, 0.004), bladeEdge, Math.cos(a) * 0.3, Math.sin(a) * 0.3, zg - 0.679, 0, 0, a + Math.PI / 2 + 0.35, lens);
-    blade.castShadow = false;
+    const blade = add(new THREE.PlaneGeometry(0.2, 0.004), bladeEdge, Math.cos(a) * 0.235, Math.sin(a) * 0.235, ZF - 1.079, 0, 0, a + Math.PI / 2 + 0.35, lens);
+    blade.castShadow = blade.receiveShadow = false;
   }
-  add(new THREE.CircleGeometry(0.5, 64), void_, 0, 0, zg - 0.72, 0, 0, 0, lens);
-  const LENS_FRONT = BD / 2 + 0.14 + z + HOOD;
+  add(new THREE.CircleGeometry(0.34, 64), deep, 0, 0, ZF - 1.19, 0, 0, 0, lens);
+  const LENS_FRONT = ZM + ZF + HOOD;
 
-  // Argollas para la correa a los lados, arriba.
-  const LUG_X = BW / 2 + 0.07;
-  const LUG_Y = TOP - 0.28;
-  const LUG_Z = -0.05;
+  // Argollas para la correa a los lados, arriba: poste, argolla triangular y protector de piel.
+  const LUG_X = BW / 2 + 0.08;
+  const LUG_Y = TOP - 0.3;
+  const LUG_Z = 0.26; // adelante del centro: así cuelga casi derecha aunque el zoom pese
   for (const s of [-1, 1]) {
-    add(new THREE.CylinderGeometry(0.06, 0.07, 0.1, 20), darkMetal, s * (BW / 2 + 0.02), LUG_Y - 0.06, LUG_Z, 0, 0, Math.PI / 2);
-    add(new THREE.TorusGeometry(0.1, 0.022, 12, 32), chrome, s * LUG_X, LUG_Y, LUG_Z, 0, Math.PI / 2, 0);
+    add(new THREE.CylinderGeometry(0.055, 0.07, 0.1, 20), chrome, s * (BW / 2 + 0.02), LUG_Y - 0.07, LUG_Z, 0, 0, Math.PI / 2);
+    add(new THREE.TorusGeometry(0.075, 0.016, 10, 28), chrome, s * LUG_X, LUG_Y, LUG_Z, 0, Math.PI / 2, 0);
   }
   scene.add(cam);
 
   // ===== Física =====
   type P = { p: T.Vector3; o: T.Vector3; w: number };
   const HOOK = new V(0, 2.25, 0);
-  const REST_YAW = 0.5; // la cámara cuelga en tres cuartos: se ven el logo, la empuñadura y el lente
+  const REST_YAW = 0.42; // la cámara cuelga en tres cuartos: se ven el logo, la empuñadura y el lente
   // Partículas del cuerpo rígido en coordenadas de la cámara. El centro va bajo y pesado, el lente un poco menos.
   const LOCAL = {
     L: new V(-LUG_X, LUG_Y, LUG_Z),

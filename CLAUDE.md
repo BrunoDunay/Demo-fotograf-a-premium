@@ -20,6 +20,8 @@ Leer primero `docs/astor.md` (ficha completa). Repositorio: https://github.com/B
 - La mesa de fotos ignora el clic fantasma tras un toque (500 ms) para no cerrar la foto recién abierta.
 - El calendario y los boletos de sábados dependen de la fecha de hoy: el calendario se dibuja solo en el navegador.
 - Galería: el reflejo del piso es un `Reflector` con shader propio sumado (aditivo) sobre el piso; las pantallas usan `toneMapped: false`. Para cambiar el recorrido, editar `STOPS` en `engine.ts` (`pk` limita cuánto se aleja la cámara en vertical; `cut` fuerza un fundido) y ajustar `STOPS`/`ROOM_STOP` en `gallery.ts`. Nada de transiciones pixeladas ni grano: a Bruno no le gustan.
+- Galería, luz: los muros llevan `emissiveMap` (abanicos y baño rasante); las líneas de luz, órbitas y estrellas son materiales básicos con color > 1 para que los tome el bloom. Los umbrales (`PORTALS` en `engine.ts`) no deben tapar rótulos ni encuadres: revisar `STOPS` si se mueven.
+- Cámara de Mi equipo: todo el modelo sale de código (sin archivos). Las capas del cristal son materiales metálicos aditivos (`coat`): solo suman reflejo. `LUG_Z` (argollas) decide cuánto cuelga de nariz y `REST_YAW` el giro de reposo.
 - El texto de los botones va en `<span class="btn-t">` en la plantilla (no envolverlo con JS: rompe la hidratación).
 - Paleta fría a propósito (porcelana, medianoche, palo de rosa) para no parecerse a Armando Ovalle Wedding Studio.
 - Capturas de revisión: puppeteer-core con el Chrome instalado; para la galería en modo sin pantalla agregar `--enable-unsafe-swiftshader`.
